@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(npx prisma:*)",
+      "Bash(node -e \"const l = require\\('lucide-react'\\); const keys = Object.keys\\(l\\); console.log\\(keys.filter\\(k => /insta|faceb|twit/i.test\\(k\\)\\).join\\(', '\\)\\)\")",
+      "Bash(node -e \"const l = require\\('lucide-react'\\); console.log\\(typeof l.Instagram, typeof l.Facebook, typeof l.Twitter\\)\")",
+      "Bash(node -e \"const l = require\\('lucide-react'\\); const all = Object.keys\\(l\\); console.log\\(all.filter\\(k => k.includes\\('Mail'\\) || k.includes\\('Globe'\\) || k.includes\\('Map'\\)\\).slice\\(0,10\\).join\\(', '\\)\\)\")",
+      "Bash(npx tsc:*)",
+      "Bash(npm run:*)",
+      "Bash(npx next:*)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/)",
+      "Bash(curl -s http://localhost:3000/api/products)",
+      "Bash(python3 -m json.tool)",
+      "Bash(npm uninstall:*)",
+      "Bash(mysql -u root ayres_shop)",
+      "Read(//c/xampp/mysql/bin/**)",
+      "Read(//c/Program Files/xampp/mysql/bin/**)",
+      "Bash(where mysql:*)",
+      "Read(//d/xampp/mysql/bin/**)",
+      "Bash(/c/xampp/mysql/bin/mysql.exe:*)",
+      "Bash(curl -s http://localhost:3000/)",
+      "Bash(curl:*)",
+      "Bash(taskkill:*)"
+    ]
+  }
+}
