@@ -48,7 +48,146 @@ Membangun online shop milik sendiri dengan pengalaman yang familiar seperti Shop
 
 ---
 
-## 3. Arsitektur Modul
+## 3. Flow Customer
+
+## 3.1 Tujuan Flow Customer
+Flow customer dirancang agar user bisa bergerak dari tahap melihat produk sampai pembayaran dengan alur yang pendek, jelas, dan stabil.
+
+## 3.2 Ringkasan Flow Customer
+1. Customer membuka website.
+2. Customer login atau register.
+3. Customer melihat katalog produk.
+4. Customer masuk ke detail produk.
+5. Customer memilih variasi dan jumlah.
+6. Customer klik `Masukkan Keranjang` atau `Beli Sekarang`.
+7. Customer masuk ke cart atau checkout.
+8. Customer memilih atau menambah alamat.
+9. Customer memilih pengiriman.
+10. Customer memilih metode pembayaran.
+11. Sistem membuat order, invoice, dan payment transaction.
+12. Customer membayar via Midtrans atau Xendit.
+13. Sistem menerima callback pembayaran.
+14. Status order berubah dan customer bisa melihatnya di `Pesanan Saya`.
+
+## 3.3 Flow Detail Customer
+
+### 1. Login / Register
+- Customer dapat login sebelum checkout.
+- Guest tetap bisa browse katalog dan detail produk.
+- Jika guest menekan `Beli Sekarang` atau `Checkout`, sistem mengarahkan ke login bila session belum ada.
+
+### 2. Browse Katalog
+- Customer melihat daftar produk aktif.
+- Customer dapat filter berdasarkan kategori, warna, ukuran, label, dan sorting.
+- Hanya produk `Live` yang tampil.
+
+### 3. Detail Produk
+- Customer melihat foto, nama, harga, diskon, variasi, stok, dan informasi pengiriman.
+- Customer wajib memilih variasi jika produk memiliki variasi.
+- Customer menentukan kuantitas sesuai stok dan batas pembelian.
+
+### 4. Cart / Buy Now
+- `Masukkan Keranjang` menambahkan item ke cart untuk dibeli nanti.
+- `Beli Sekarang` langsung membuat draft checkout dari item terpilih.
+- Sistem selalu memvalidasi stok, variasi, dan harga aktif.
+
+### 5. Checkout
+- Customer memilih item checkout.
+- Customer memilih alamat pengiriman.
+- Customer memilih kurir atau layanan pengiriman.
+- Sistem menghitung subtotal, diskon, ongkir, dan total akhir.
+
+### 6. Alamat
+- Customer dapat menambah, edit, hapus, dan memilih alamat default.
+- Alamat aktif menentukan ongkir dan opsi layanan pengiriman.
+
+### 7. Pembayaran
+- Customer memilih metode bayar dari Midtrans atau Xendit.
+- Backend membuat payment transaction.
+- Frontend menampilkan popup, redirect URL, atau instruksi bayar.
+- Status final pembayaran hanya ditentukan backend dari callback gateway.
+
+### 8. Pesanan Saya
+- Setelah order dibuat, customer bisa melihat status:
+  - belum bayar
+  - diproses
+  - dikirim
+  - selesai
+  - dibatalkan
+- Halaman ini membaca data order yang sama dengan panel admin.
+
+## 3.4 Prinsip Penting Flow Customer
+- customer tidak boleh melihat produk non-aktif
+- harga final dihitung ulang saat checkout
+- stok diverifikasi lagi saat order dibuat
+- payment final tidak boleh hanya bergantung pada redirect frontend
+
+---
+
+## 4. Flow Admin
+
+## 4.1 Tujuan Flow Admin
+Flow admin dirancang agar operasional toko dapat mengelola katalog, promosi, dan pesanan secara konsisten dari satu panel.
+
+## 4.2 Ringkasan Flow Admin
+1. Admin login ke panel admin.
+2. Admin mengelola produk.
+3. Admin membuat atau mengubah promosi.
+4. Customer melakukan order.
+5. Sistem menerima pembayaran.
+6. Admin melihat order masuk.
+7. Admin memproses pengemasan dan pengiriman.
+8. Admin memperbarui status fulfillment.
+9. Customer menerima update status pesanan.
+
+## 4.3 Flow Detail Admin
+
+### 1. Product Management
+- Admin membuat produk baru.
+- Admin mengisi foto, nama, kategori, spesifikasi, deskripsi, harga, stok, variasi, dan pengiriman.
+- Admin menyimpan produk sebagai `Draft`, `Archived`, atau `Live`.
+- Hanya produk `Live` yang tampil di sisi customer.
+
+### 2. Product Update
+- Admin dapat edit produk kapan saja.
+- Perubahan data produk mempengaruhi katalog customer untuk item yang belum menjadi order.
+- Order yang sudah dibuat tetap memakai snapshot data saat transaksi.
+
+### 3. Promotion Center
+- Admin membuat `Promo Toko`, `Paket Diskon`, atau `Kombo Hemat`.
+- Promo terhubung ke produk atau variasi.
+- Saat promo aktif, engine pricing menghitung harga promo untuk customer.
+- Saat promo berakhir, harga customer kembali ke harga dasar atau rule promo lain yang masih berlaku.
+
+### 4. Order Management
+- Setelah customer checkout dan pembayaran valid, order masuk ke panel admin.
+- Admin melihat daftar order berdasarkan status.
+- Admin dapat memfilter order yang perlu diproses atau perlu dikirim.
+
+### 5. Fulfillment
+- Admin menyiapkan barang.
+- Admin memilih metode pengiriman seperti pickup atau drop off.
+- Admin memasukkan data pengiriman / resi jika diperlukan.
+- Sistem mengubah status fulfillment dan order.
+
+### 6. Bulk Shipping
+- Admin dapat memproses banyak order sekaligus pada tab `Perlu Dikirim`.
+- Sistem hanya menerima order yang memenuhi syarat untuk pengiriman massal.
+
+### 7. Audit dan Kontrol
+- Semua aksi penting admin perlu dicatat ke `audit_logs`.
+- Hard delete untuk produk sebaiknya dibatasi.
+- Perubahan status payment tidak dilakukan manual kecuali lewat proses terkontrol.
+
+## 4.4 Prinsip Penting Flow Admin
+- admin adalah pengelola data master katalog
+- admin tidak boleh mengubah hasil final payment tanpa validasi
+- admin bekerja pada order yang dibuat customer, bukan membuat order manual pada MVP
+- data promo dan produk harus konsisten karena langsung mempengaruhi frontend customer
+
+---
+
+## 5. Arsitektur Modul
 
 Sistem dibagi menjadi beberapa domain inti:
 
@@ -63,7 +202,7 @@ Sistem dibagi menjadi beberapa domain inti:
 9. `Admin`
 10. `Audit`
 
-## 3.1 Identity
+## 5.1 Identity
 Menangani:
 - customer account
 - admin account
@@ -72,7 +211,7 @@ Menangani:
 - session
 - roles dan permissions
 
-## 3.2 Catalog
+## 5.2 Catalog
 Menangani:
 - kategori produk
 - produk
@@ -82,13 +221,13 @@ Menangani:
 - harga dasar
 - stok
 
-## 3.3 Cart
+## 5.3 Cart
 Menangani:
 - keranjang user
 - item keranjang
 - snapshot harga saat item dimasukkan
 
-## 3.4 Checkout
+## 5.4 Checkout
 Menangani:
 - draft checkout
 - alamat aktif
@@ -96,7 +235,7 @@ Menangani:
 - voucher / promo yang terpasang
 - final total sebelum order dibuat
 
-## 3.5 Order
+## 5.5 Order
 Menangani:
 - order header
 - order item
@@ -104,21 +243,21 @@ Menangani:
 - status order
 - status fulfillment
 
-## 3.6 Payment
+## 5.6 Payment
 Menangani:
 - payment transaction
 - payment provider
 - callback gateway
 - sinkronisasi status payment
 
-## 3.7 Promotion
+## 5.7 Promotion
 Menangani:
 - promo toko
 - paket diskon
 - kombo hemat
 - rule promo per produk / variasi
 
-## 3.8 Shipping
+## 5.8 Shipping
 Menangani:
 - alamat user
 - kurir
@@ -126,23 +265,23 @@ Menangani:
 - shipment
 - tracking / resi
 
-## 3.9 Admin
+## 5.9 Admin
 Menangani:
 - admin action
 - moderation data produk
 - proses order
 - pengiriman massal
 
-## 3.10 Audit
+## 5.10 Audit
 Menangani:
 - log perubahan data penting
 - histori perubahan order, promo, produk, dan payment
 
 ---
 
-## 4. Sinkronisasi Flow Admin dan Customer
+## 6. Sinkronisasi Flow Admin dan Customer
 
-## 4.1 Prinsip Sinkronisasi
+## 6.1 Prinsip Sinkronisasi
 `Admin` dan `Customer` tidak boleh punya model data terpisah untuk entitas inti. Keduanya harus membaca dan menulis ke domain yang sama, tetapi lewat rule dan permission yang berbeda.
 
 Contoh:
@@ -153,7 +292,7 @@ Contoh:
 - admin membuat `promotion`
 - customer melihat harga promo yang dihasilkan sistem promosi
 
-## 4.2 Mapping Modul Admin ke Customer
+## 6.2 Mapping Modul Admin ke Customer
 
 ### Product Admin -> Catalog Customer
 - admin membuat produk
@@ -187,9 +326,9 @@ Contoh:
 
 ---
 
-## 5. Arsitektur Data Bersama
+## 7. Arsitektur Data Bersama
 
-## 5.1 Entitas Inti Tunggal
+## 7.1 Entitas Inti Tunggal
 Berikut adalah entitas inti yang dipakai bersama oleh admin dan customer:
 
 ### Identity
@@ -239,7 +378,7 @@ Berikut adalah entitas inti yang dipakai bersama oleh admin dan customer:
 - `payment_methods`
 - `audit_logs`
 
-## 5.2 Sumber Kebenaran per Domain
+## 7.2 Sumber Kebenaran per Domain
 
 ### Product
 Source of truth:
@@ -281,7 +420,7 @@ Source of truth:
 
 ---
 
-## 6. Relasi Data Tingkat Tinggi
+## 8. Relasi Data Tingkat Tinggi
 
 ```mermaid
 erDiagram
@@ -322,9 +461,9 @@ erDiagram
 
 ---
 
-## 7. Lifecycle Status yang Harus Konsisten
+## 9. Lifecycle Status yang Harus Konsisten
 
-## 7.1 Product Status
+## 9.1 Product Status
 - `Draft`
 - `Live`
 - `Under Review`
@@ -336,7 +475,7 @@ Rule:
 - `Archived` tidak tampil di customer
 - promo hanya bisa aktif pada produk / variasi yang valid
 
-## 7.2 Promotion Status
+## 9.2 Promotion Status
 - `Draft`
 - `Scheduled`
 - `Active`
@@ -348,7 +487,7 @@ Rule:
 - hanya promo `Active` yang mempengaruhi harga customer
 - promo `Scheduled` bisa dipreview admin tetapi belum aktif di frontend customer
 
-## 7.3 Order Status
+## 9.3 Order Status
 - `Unpaid`
 - `Pending Payment`
 - `Paid`
@@ -359,7 +498,7 @@ Rule:
 - `Cancelled`
 - `Refunded`
 
-## 7.4 Fulfillment Status
+## 9.4 Fulfillment Status
 - `Pending`
 - `Packed`
 - `Waiting Pickup`
@@ -367,7 +506,7 @@ Rule:
 - `Delivered`
 - `Returned`
 
-## 7.5 Payment Status
+## 9.5 Payment Status
 - `Pending`
 - `Paid`
 - `Failed`
@@ -381,7 +520,7 @@ Rule:
 
 ---
 
-## 8. Arsitektur Harga dan Promo
+## 10. Arsitektur Harga dan Promo
 
 Harga yang dilihat customer tidak langsung diambil dari satu field final, tetapi dihitung dari beberapa komponen:
 
@@ -391,13 +530,13 @@ Harga yang dilihat customer tidak langsung diambil dari satu field final, tetapi
 4. kombo hemat aktif
 5. voucher saat checkout
 
-## 8.1 Prinsip Harga
+## 10.1 Prinsip Harga
 - `base_price` berasal dari `products` atau `product_variants`
 - `display_price` dihitung untuk katalog dan detail produk
 - `checkout_price` dihitung ulang saat checkout
 - `paid_price` disimpan di `order_items` sebagai snapshot final transaksi
 
-## 8.2 Snapshot Penting
+## 10.2 Snapshot Penting
 Simpan snapshot agar histori tidak berubah saat admin mengubah data setelah order dibuat:
 - nama produk saat order
 - nama variasi saat order
@@ -408,9 +547,9 @@ Simpan snapshot agar histori tidak berubah saat admin mengubah data setelah orde
 
 ---
 
-## 9. Arsitektur Checkout dan Payment
+## 11. Arsitektur Checkout dan Payment
 
-## 9.1 Flow Teknis Singkat
+## 11.1 Flow Teknis Singkat
 1. Customer pilih item dari cart atau buy now.
 2. Backend buat draft checkout.
 3. Customer pilih alamat dan kurir.
@@ -427,7 +566,7 @@ Simpan snapshot agar histori tidak berubah saat admin mengubah data setelah orde
 10. Backend update payment status dan order status.
 11. Admin memproses order.
 
-## 9.2 Integrasi Payment
+## 11.2 Integrasi Payment
 
 ### Midtrans
 - gunakan Snap atau Core API
@@ -439,16 +578,16 @@ Simpan snapshot agar histori tidak berubah saat admin mengubah data setelah orde
 - backend menyimpan `provider_reference`
 - webhook wajib diverifikasi signature
 
-## 9.3 Rule Payment
+## 11.3 Rule Payment
 - satu order boleh punya lebih dari satu invoice historis, tapi hanya satu invoice aktif
 - satu invoice punya satu payment utama
 - payment retry harus tetap terhubung ke order yang sama
 
 ---
 
-## 10. Boundary Frontend dan Backend
+## 12. Boundary Frontend dan Backend
 
-## 10.1 Frontend Customer
+## 12.1 Frontend Customer
 Tanggung jawab:
 - render katalog
 - render detail produk
@@ -462,14 +601,14 @@ Tidak boleh menjadi sumber kebenaran untuk:
 - stok final
 - order final status
 
-## 10.2 Frontend Admin
+## 12.2 Frontend Admin
 Tanggung jawab:
 - CRUD produk
 - kelola promo
 - proses pesanan
 - proses pengiriman
 
-## 10.3 Backend API
+## 12.3 Backend API
 Tanggung jawab:
 - autentikasi
 - business rules
@@ -482,9 +621,9 @@ Tanggung jawab:
 
 ---
 
-## 11. Struktur Route Tingkat Tinggi
+## 13. Struktur Route Tingkat Tinggi
 
-## 11.1 Customer Frontend
+## 13.1 Customer Frontend
 - `/`
 - `/collections`
 - `/collections/:slug`
@@ -499,7 +638,7 @@ Tanggung jawab:
 - `/profile`
 - `/payment/:invoiceNumber`
 
-## 11.2 Admin Frontend
+## 13.2 Admin Frontend
 - `/admin`
 - `/admin/orders`
 - `/admin/orders/:id`
@@ -514,7 +653,7 @@ Tanggung jawab:
 - `/admin/settings/users`
 - `/admin/settings/roles`
 
-## 11.3 Backend API
+## 13.3 Backend API
 - `/api/auth/*`
 - `/api/products/*`
 - `/api/cart/*`
@@ -526,7 +665,7 @@ Tanggung jawab:
 
 ---
 
-## 12. MVP Prioritas Implementasi
+## 14. MVP Prioritas Implementasi
 
 ## Tahap 1
 - katalog customer
@@ -552,7 +691,7 @@ Tanggung jawab:
 
 ---
 
-## 13. Risiko Arsitektur yang Harus Dijaga
+## 15. Risiko Arsitektur yang Harus Dijaga
 
 ### Harga tidak sinkron
 Solusi:
@@ -580,7 +719,7 @@ Solusi:
 
 ---
 
-## 14. Rekomendasi Aturan MVP
+## 16. Rekomendasi Aturan MVP
 
 Untuk versi awal, gunakan aturan sederhana:
 
@@ -594,7 +733,7 @@ Untuk versi awal, gunakan aturan sederhana:
 
 ---
 
-## 15. Definisi Selesai Dokumentasi Tahap Ini
+## 17. Definisi Selesai Dokumentasi Tahap Ini
 
 Tahap dokumentasi saat ini dianggap selesai bila:
 - flow admin sudah terdokumentasi
@@ -607,7 +746,7 @@ Tahap dokumentasi saat ini dianggap selesai bila:
 
 ---
 
-## 16. Next Step
+## 18. Next Step
 
 Dokumentasi berikutnya yang disarankan:
 
@@ -623,3 +762,221 @@ Dokumentasi berikutnya yang disarankan:
    aturan promo dan prioritas diskon
 6. `payment_integration.md`
    flow teknis Midtrans dan Xendit secara detail
+
+---
+
+## 19. System Architecture Diagram
+
+## 19.1 Tujuan
+Diagram ini menjelaskan komponen utama sistem dan hubungan antar layer agar implementasi admin, customer, backend, database, payment, dan shipping tetap sinkron.
+
+## 19.2 Komponen Utama
+- `Customer Web App`
+- `Admin Web App`
+- `Backend API`
+- `Database`
+- `Payment Gateway`
+- `Shipping Service`
+- `Notification Service` opsional
+
+## 19.3 Diagram Arsitektur Sistem
+
+```mermaid
+flowchart LR
+    subgraph Client[Client Layer]
+        CUST[Customer Web App]
+        ADMIN[Admin Web App]
+    end
+
+    subgraph API[Application Layer]
+        AUTH[Auth Module]
+        CATALOG[Catalog Module]
+        CART[Cart Module]
+        CHECKOUT[Checkout Module]
+        ORDER[Order Module]
+        PROMO[Promotion Module]
+        PAYMENT[Payment Module]
+        SHIPPING[Shipping Module]
+        AUDIT[Audit Module]
+    end
+
+    subgraph DATA[Data Layer]
+        DB[(Primary Database)]
+    end
+
+    subgraph EXT[External Services]
+        PG[Midtrans / Xendit]
+        COURIER[Shipping / Courier Service]
+        NOTIF[Email / WhatsApp / Push Notification]
+    end
+
+    CUST --> AUTH
+    CUST --> CATALOG
+    CUST --> CART
+    CUST --> CHECKOUT
+    CUST --> ORDER
+    CUST --> PAYMENT
+
+    ADMIN --> AUTH
+    ADMIN --> CATALOG
+    ADMIN --> PROMO
+    ADMIN --> ORDER
+    ADMIN --> SHIPPING
+    ADMIN --> AUDIT
+
+    AUTH --> DB
+    CATALOG --> DB
+    CART --> DB
+    CHECKOUT --> DB
+    ORDER --> DB
+    PROMO --> DB
+    PAYMENT --> DB
+    SHIPPING --> DB
+    AUDIT --> DB
+
+    CHECKOUT --> PROMO
+    CHECKOUT --> SHIPPING
+    CHECKOUT --> PAYMENT
+    ORDER --> PAYMENT
+    ORDER --> SHIPPING
+    PAYMENT --> PG
+    PG --> PAYMENT
+    SHIPPING --> COURIER
+    ORDER --> NOTIF
+    PAYMENT --> NOTIF
+    SHIPPING --> NOTIF
+```
+
+## 19.4 Penjelasan Arsitektur
+
+### Customer Web App
+Frontend untuk:
+- login customer
+- lihat katalog
+- detail produk
+- cart
+- checkout
+- pembayaran
+- pesanan saya
+
+### Admin Web App
+Frontend untuk:
+- CRUD produk
+- kelola promo
+- lihat dan proses pesanan
+- atur pengiriman
+- audit aktivitas
+
+### Backend API
+Pusat business logic untuk:
+- autentikasi
+- validasi data
+- pricing calculation
+- pembuatan order
+- integrasi payment gateway
+- callback verification
+- sinkronisasi shipment
+
+### Database
+Menyimpan seluruh source of truth utama:
+- catalog
+- promo
+- cart
+- order
+- payment
+- shipment
+- audit log
+
+### Midtrans / Xendit
+Dipakai untuk:
+- create payment transaction
+- menampilkan payment instruction
+- mengirim callback pembayaran
+
+### Shipping Service
+Dipakai untuk:
+- cek layanan kirim
+- ongkir
+- pickup / drop off
+- tracking / resi
+
+---
+
+## 20. Sequence Diagram Checkout + Payment
+
+## 20.1 Tujuan
+Diagram ini menjelaskan urutan teknis dari saat customer checkout sampai payment dikonfirmasi dan order siap diproses admin.
+
+## 20.2 Sequence Diagram
+
+```mermaid
+sequenceDiagram
+    actor Customer
+    participant FE as Customer Frontend
+    participant API as Backend API
+    participant PR as Pricing/Promo Engine
+    participant DB as Database
+    participant PG as Midtrans/Xendit
+    participant Admin as Admin Panel
+
+    Customer->>FE: Pilih item dan klik Checkout
+    FE->>API: Request draft checkout
+    API->>DB: Ambil cart, product, variant, address, stock
+    API->>PR: Hitung harga, diskon, promo, total
+    PR-->>API: Checkout summary
+    API-->>FE: Tampilkan checkout summary
+
+    Customer->>FE: Pilih alamat, pengiriman, pembayaran
+    FE->>API: Submit checkout
+    API->>DB: Validasi ulang stock dan harga
+    API->>DB: Buat order
+    API->>DB: Buat order_items
+    API->>DB: Buat invoice
+    API->>DB: Buat payment pending
+    API->>PG: Create transaction / invoice
+    PG-->>API: Return payment token/url/reference
+    API->>DB: Simpan provider reference
+    API-->>FE: Return payment token/url
+
+    FE-->>Customer: Tampilkan popup / redirect pembayaran
+    Customer->>PG: Selesaikan pembayaran
+    PG-->>API: Callback webhook payment status
+    API->>PG: Verifikasi signature / status jika perlu
+    API->>DB: Update payment status
+    API->>DB: Update invoice status
+    API->>DB: Update order status
+    API-->>FE: Payment status dapat dipolling / direfresh
+
+    Admin->>API: Buka daftar order
+    API->>DB: Ambil order yang sudah paid
+    DB-->>API: Data order siap diproses
+    API-->>Admin: Tampilkan order untuk fulfillment
+```
+
+## 20.3 Penjelasan Sequence Checkout
+
+### Step 1: Draft Checkout
+- frontend meminta ringkasan checkout
+- backend mengambil item, stok, alamat, dan promo aktif
+- backend menghitung total yang benar sebelum user submit order
+
+### Step 2: Submit Checkout
+- backend melakukan validasi ulang
+- backend tidak boleh memakai data total dari frontend sebagai sumber kebenaran
+- backend membuat `order`, `order_items`, `invoice`, dan `payment`
+
+### Step 3: Create Payment
+- backend menghubungi Midtrans atau Xendit
+- provider mengembalikan token atau URL pembayaran
+- frontend hanya menampilkan atau redirect ke channel pembayaran
+
+### Step 4: Payment Confirmation
+- payment sukses dikonfirmasi lewat callback resmi gateway
+- backend update status invoice dan order
+- order yang sudah paid menjadi terlihat di panel admin
+
+## 20.4 Rule Penting Sequence Payment
+- callback gateway selalu lebih dipercaya daripada redirect frontend
+- order tidak masuk proses fulfillment sebelum payment valid
+- semua perubahan payment harus tercatat
+- retry payment harus tetap terhubung ke order yang sama
