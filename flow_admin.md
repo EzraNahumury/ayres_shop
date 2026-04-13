@@ -1057,3 +1057,483 @@ flowchart TD
     L --> M[Proses Massal]
     M --> N[Status Pesanan Diperbarui]
 ```
+
+---
+
+## J. ERD / RELASI TABEL AWAL
+
+## J.1 Tujuan
+Bagian ini adalah rancangan awal entitas database untuk admin online shop. Struktur ini masih MVP dan bisa dikembangkan saat implementasi detail dimulai.
+
+## J.2 Entitas Utama
+
+### Master Admin
+- `admins`
+- `admin_roles`
+- `audit_logs`
+
+### Product
+- `products`
+- `product_images`
+- `product_categories`
+- `product_attributes`
+- `product_attribute_values`
+- `product_variants`
+- `product_variant_options`
+- `product_variant_images`
+- `product_shipping_profiles`
+
+### Promotion
+- `promotions`
+- `promotion_store_items`
+- `promotion_package_tiers`
+- `promotion_package_items`
+- `promotion_combo_main_items`
+- `promotion_combo_addon_items`
+
+### Order
+- `orders`
+- `order_items`
+- `order_status_histories`
+- `shipments`
+- `shipment_items`
+
+### Reference
+- `brands`
+- `couriers`
+- `payment_methods`
+
+## J.3 Relasi Inti
+
+### Product
+- satu `product_category` punya banyak `products`
+- satu `product` punya banyak `product_images`
+- satu `product` punya banyak `product_variants`
+- satu `product` punya satu `product_shipping_profile`
+- satu `product_category` punya banyak `product_attributes`
+- satu `product` punya banyak `product_attribute_values`
+- satu `product_variant` bisa punya banyak `product_variant_images`
+
+### Promotion
+- satu `promotion` bisa bertipe:
+  - `store_promo`
+  - `package_discount`
+  - `combo_deal`
+- satu `promotion` tipe `store_promo` punya banyak `promotion_store_items`
+- satu `promotion` tipe `package_discount` punya banyak `promotion_package_tiers`
+- satu `promotion` tipe `package_discount` punya banyak `promotion_package_items`
+- satu `promotion` tipe `combo_deal` punya banyak `promotion_combo_main_items`
+- satu `promotion` tipe `combo_deal` punya banyak `promotion_combo_addon_items`
+
+### Order
+- satu `order` punya banyak `order_items`
+- satu `order` punya banyak `order_status_histories`
+- satu `order` bisa punya satu atau banyak `shipments`
+- satu `shipment` punya banyak `shipment_items`
+- satu `order_item` mengacu ke `product` dan opsional ke `product_variant`
+
+## J.4 ERD Diagram
+
+```mermaid
+erDiagram
+    ADMIN_ROLES ||--o{ ADMINS : has
+    ADMINS ||--o{ AUDIT_LOGS : creates
+
+    PRODUCT_CATEGORIES ||--o{ PRODUCTS : contains
+    BRANDS ||--o{ PRODUCTS : labels
+    PRODUCTS ||--o{ PRODUCT_IMAGES : has
+    PRODUCTS ||--o{ PRODUCT_VARIANTS : has
+    PRODUCTS ||--|| PRODUCT_SHIPPING_PROFILES : has
+    PRODUCT_CATEGORIES ||--o{ PRODUCT_ATTRIBUTES : defines
+    PRODUCTS ||--o{ PRODUCT_ATTRIBUTE_VALUES : stores
+    PRODUCT_ATTRIBUTES ||--o{ PRODUCT_ATTRIBUTE_VALUES : maps
+    PRODUCT_VARIANTS ||--o{ PRODUCT_VARIANT_IMAGES : has
+
+    PRODUCTS ||--o{ PROMOTION_STORE_ITEMS : included_in
+    PRODUCT_VARIANTS ||--o{ PROMOTION_STORE_ITEMS : variant_of
+
+    PROMOTIONS ||--o{ PROMOTION_STORE_ITEMS : has
+    PROMOTIONS ||--o{ PROMOTION_PACKAGE_TIERS : has
+    PROMOTIONS ||--o{ PROMOTION_PACKAGE_ITEMS : has
+    PROMOTIONS ||--o{ PROMOTION_COMBO_MAIN_ITEMS : has
+    PROMOTIONS ||--o{ PROMOTION_COMBO_ADDON_ITEMS : has
+
+    PRODUCTS ||--o{ PROMOTION_PACKAGE_ITEMS : included_in
+    PRODUCT_VARIANTS ||--o{ PROMOTION_PACKAGE_ITEMS : variant_of
+    PRODUCTS ||--o{ PROMOTION_COMBO_MAIN_ITEMS : main_product
+    PRODUCT_VARIANTS ||--o{ PROMOTION_COMBO_MAIN_ITEMS : main_variant
+    PRODUCTS ||--o{ PROMOTION_COMBO_ADDON_ITEMS : addon_product
+    PRODUCT_VARIANTS ||--o{ PROMOTION_COMBO_ADDON_ITEMS : addon_variant
+
+    ORDERS ||--o{ ORDER_ITEMS : has
+    ORDERS ||--o{ ORDER_STATUS_HISTORIES : tracks
+    ORDERS ||--o{ SHIPMENTS : ships
+    SHIPMENTS ||--o{ SHIPMENT_ITEMS : contains
+
+    PRODUCTS ||--o{ ORDER_ITEMS : ordered_as
+    PRODUCT_VARIANTS ||--o{ ORDER_ITEMS : ordered_variant
+    COURIERS ||--o{ SHIPMENTS : handles
+    PAYMENT_METHODS ||--o{ ORDERS : paid_with
+```
+
+## J.5 Draft Kolom Utama
+
+### `admins`
+- id
+- name
+- email
+- password_hash
+- role_id
+- status
+- created_at
+- updated_at
+
+### `products`
+- id
+- category_id
+- brand_id
+- name
+- slug
+- sku
+- gtin
+- description
+- status
+- min_purchase
+- max_purchase
+- weight_grams
+- length_cm
+- width_cm
+- height_cm
+- has_variant
+- published_at
+- created_by
+- updated_by
+- created_at
+- updated_at
+
+### `product_variants`
+- id
+- product_id
+- sku
+- gtin
+- option_value_1
+- option_value_2
+- price
+- stock
+- is_active
+- created_at
+- updated_at
+
+### `promotions`
+- id
+- type
+- name
+- start_at
+- end_at
+- status
+- max_duration_days
+- created_by
+- created_at
+- updated_at
+
+### `orders`
+- id
+- order_number
+- customer_name
+- customer_phone
+- payment_method_id
+- total_amount
+- payment_status
+- fulfillment_status
+- order_status
+- shipping_deadline_at
+- created_at
+- updated_at
+
+### `shipments`
+- id
+- order_id
+- courier_id
+- shipping_method
+- tracking_number
+- shipped_at
+- delivery_status
+- created_at
+- updated_at
+
+## J.6 Catatan Desain
+- Untuk MVP, variasi cukup mendukung 2 level opsi.
+- Promo harus bisa diarahkan ke level `product` atau `product_variant`.
+- `audit_logs` penting untuk semua aksi admin: create, update, archive, activate promo, dan shipping.
+
+---
+
+## K. STRUKTUR MENU + ROUTE ADMIN
+
+## K.1 Struktur Menu Admin
+
+### Dashboard
+- Overview
+
+### Pesanan
+- Semua Pesanan
+- Belum Bayar
+- Perlu Dikirim
+- Dikirim
+- Selesai
+- Pengembalian / Pembatalan
+- Detail Pesanan
+
+### Product
+- Daftar Produk
+- Tambah Produk
+- Draft / Archived
+- Edit Produk
+- Detail Produk
+
+### Pusat Promosi
+- Dashboard Promosi
+- Promo Toko
+- Paket Diskon
+- Kombo Hemat
+- Detail Promo
+
+### Pengaturan
+- Admin Users
+- Roles & Permissions
+- Master Data
+- Audit Log
+
+## K.2 Route Admin yang Disarankan
+
+### Dashboard
+- `GET /admin`
+
+### Pesanan
+- `GET /admin/orders`
+- `GET /admin/orders?status=unpaid`
+- `GET /admin/orders?status=to_ship`
+- `GET /admin/orders?status=shipped`
+- `GET /admin/orders?status=completed`
+- `GET /admin/orders?status=return_refund`
+- `GET /admin/orders/:id`
+- `POST /admin/orders/:id/ship`
+- `POST /admin/orders/bulk-ship`
+- `GET /admin/orders/export`
+
+### Product
+- `GET /admin/products`
+- `GET /admin/products/create`
+- `POST /admin/products`
+- `GET /admin/products/:id`
+- `GET /admin/products/:id/edit`
+- `PUT /admin/products/:id`
+- `PATCH /admin/products/:id/archive`
+- `DELETE /admin/products/:id`
+- `POST /admin/products/:id/duplicate`
+
+### Pusat Promosi
+- `GET /admin/promotions`
+- `GET /admin/promotions/store`
+- `GET /admin/promotions/store/create`
+- `POST /admin/promotions/store`
+- `GET /admin/promotions/package`
+- `GET /admin/promotions/package/create`
+- `POST /admin/promotions/package`
+- `GET /admin/promotions/combo`
+- `GET /admin/promotions/combo/create`
+- `POST /admin/promotions/combo`
+- `GET /admin/promotions/:id`
+- `PUT /admin/promotions/:id`
+- `PATCH /admin/promotions/:id/activate`
+- `PATCH /admin/promotions/:id/deactivate`
+- `DELETE /admin/promotions/:id`
+
+### Pengaturan
+- `GET /admin/settings/users`
+- `GET /admin/settings/roles`
+- `GET /admin/settings/master-data`
+- `GET /admin/settings/audit-logs`
+
+## K.3 Struktur Navigasi yang Direkomendasikan
+
+```text
+/admin
+  /orders
+    /:id
+  /products
+    /create
+    /:id
+    /:id/edit
+  /promotions
+    /store
+      /create
+    /package
+      /create
+    /combo
+      /create
+    /:id
+  /settings
+    /users
+    /roles
+    /master-data
+    /audit-logs
+```
+
+## K.4 Catatan Routing
+- Gunakan route list dan detail yang konsisten.
+- Pisahkan route create dan edit agar form state lebih sederhana.
+- Untuk table dengan banyak filter, dukung query string agar URL bisa dishare.
+
+---
+
+## L. PRD RINGKAS PER MODUL
+
+## L.1 PRD Ringkas Modul Product
+
+### Nama modul
+`Product Management`
+
+### Tujuan bisnis
+Memudahkan admin mengelola katalog produk lengkap, akurat, dan siap tayang.
+
+### Masalah yang diselesaikan
+- Admin sulit mengelola banyak produk
+- Data produk tidak konsisten
+- Variasi, harga, dan stok rawan salah input
+
+### User utama
+- Admin toko
+- Admin operasional
+
+### Scope MVP
+- daftar produk
+- tambah produk
+- edit produk
+- arsipkan produk
+- variasi produk
+- harga dan stok
+- pengiriman
+
+### Fitur utama
+- upload multi foto
+- input nama dan GTIN
+- spesifikasi berdasarkan kategori
+- deskripsi produk
+- variasi dan kombinasi
+- harga dan stok per produk / variasi
+- berat dan dimensi pengiriman
+
+### KPI awal
+- waktu input produk lebih cepat
+- error data produk berkurang
+- stok produk lebih akurat
+
+### Non-goal awal
+- manajemen review produk
+- rekomendasi AI otomatis penuh
+- sinkronisasi marketplace eksternal
+
+## L.2 PRD Ringkas Modul Pusat Promosi
+
+### Nama modul
+`Promotion Center`
+
+### Tujuan bisnis
+Membantu admin membuat promo yang meningkatkan penjualan, conversion rate, dan jumlah item terjual.
+
+### Masalah yang diselesaikan
+- Promo sulit diatur per produk
+- Admin butuh promosi dengan model berbeda
+- Pengaturan diskon massal memakan waktu
+
+### User utama
+- Admin marketing
+- Admin toko
+
+### Scope MVP
+- dashboard promosi
+- promo toko
+- paket diskon
+- kombo hemat
+- aktivasi dan nonaktivasi promo
+
+### Fitur utama
+- buat promo berdasarkan periode
+- pilih produk untuk promo
+- diskon per item / variasi
+- stok promo
+- batas pembelian
+- pengaturan paket diskon bertingkat
+- relasi produk utama dan tambahan untuk kombo hemat
+
+### KPI awal
+- jumlah promo aktif meningkat
+- penjualan dari promo meningkat
+- waktu setup promo turun
+
+### Non-goal awal
+- voucher user-level
+- gamification promo
+- promosi lintas channel
+
+## L.3 PRD Ringkas Modul Pesanan
+
+### Nama modul
+`Order Management`
+
+### Tujuan bisnis
+Membantu admin memproses pesanan secara cepat, akurat, dan terukur sampai barang dikirim.
+
+### Masalah yang diselesaikan
+- Sulit menemukan order yang perlu diproses
+- Risiko telat kirim tinggi
+- Pengiriman banyak order memakan waktu
+
+### User utama
+- Admin operasional
+- Tim fulfillment
+
+### Scope MVP
+- daftar pesanan
+- filter pesanan
+- detail pesanan
+- atur pengiriman
+- pengiriman massal
+- export pesanan
+
+### Fitur utama
+- tab status order
+- filter berdasarkan tipe, status, nomor order, jasa kirim
+- detail item pesanan
+- proses drop off / pickup
+- shipping massal
+- update status pengiriman
+
+### KPI awal
+- SLA proses order lebih cepat
+- telat kirim berkurang
+- jumlah order yang diproses per admin naik
+
+### Non-goal awal
+- retur kompleks multi-step
+- settlement ke seller multi-vendor
+- customer support chat internal
+
+## L.4 Dependensi Antar Modul
+- `Product` menjadi dasar untuk `Pusat Promosi`
+- `Product` dan `Order` terhubung lewat `order_items`
+- `Promotion` mempengaruhi harga tampil dan harga transaksi saat checkout
+- `Order` membutuhkan stok valid dari `Product` dan `Product Variant`
+
+## L.5 Prioritas Build yang Disarankan
+1. Product
+2. Order
+3. Promotion
+
+## L.6 Definisi Selesai Tahap MVP
+- Admin dapat membuat produk lengkap sampai live
+- Admin dapat mengedit dan mengarsipkan produk
+- Admin dapat membuat 3 tipe promo utama
+- Admin dapat melihat dan memproses pesanan perlu dikirim
+- Admin dapat menjalankan pengiriman massal dasar
