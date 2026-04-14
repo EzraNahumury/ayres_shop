@@ -21,7 +21,9 @@
       "Bash(/c/xampp/mysql/bin/mysql.exe:*)",
       "Bash(curl -s http://localhost:3000/)",
       "Bash(curl:*)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(node -e ':*)",
+      "Bash(ls:*)"
     ]
   }
 }

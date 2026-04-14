@@ -1,15 +1,20 @@
 import { notFound } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
+import { Tag, Clock } from "lucide-react";
 import {
   getProductBySlug,
   getProductVariants,
   getProductImages,
   getBestSellers,
 } from "@/lib/queries/products";
+import {
+  getActiveStorePromoForProduct,
+  getActiveStorePromosByProductIds,
+} from "@/lib/queries/pricing";
 import { formatPrice } from "@/lib/utils";
 import { ProductCard } from "@/components/shop/product-card";
 import { VariantSelector } from "./variant-selector";
+import { ProductGallery } from "./product-gallery";
 import type { Metadata } from "next";
 
 const PLACEHOLDER = "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=600&h=800&fit=crop";
@@ -40,13 +45,13 @@ export default async function ProductDetailPage({
 
   if (!product) notFound();
 
-  const [variants, images, related] = await Promise.all([
+  const [variants, images, related, promo] = await Promise.all([
     getProductVariants(product.id),
     getProductImages(product.id),
     getBestSellers(4),
+    getActiveStorePromoForProduct(product.id),
   ]);
 
-  // Extract unique color/size options from variants
   const colorOptions = [
     ...new Set(variants.map((v) => v.option_value_1).filter(Boolean)),
   ] as string[];
@@ -55,6 +60,13 @@ export default async function ProductDetailPage({
   ] as string[];
 
   const relatedProducts = related.filter((p) => p.slug !== slug).slice(0, 4);
+  const relatedPromos = await getActiveStorePromosByProductIds(
+    relatedProducts.map((p) => p.id)
+  );
+
+  const basePrice = Number(product.base_price);
+  const effectivePrice = promo ? promo.discount_price : basePrice;
+  const hasPromo = !!promo && !product.has_variant;
 
   return (
     <div>
@@ -81,78 +93,83 @@ export default async function ProductDetailPage({
 
         {/* Product layout */}
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-16">
-          {/* Left — Gallery */}
-          <div className="flex flex-col gap-3">
-            {/* Main image */}
-            <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-neutral-100">
-              <Image
-                src={images[0]?.image_url || PLACEHOLDER}
-                alt={product.name}
-                fill
-                priority
-                sizes="(max-width: 1024px) 100vw, 50vw"
-                className="object-cover"
-              />
-            </div>
+          <ProductGallery
+            images={images.map((img) => ({
+              id: img.id,
+              image_url: img.image_url,
+              alt_text: img.alt_text,
+            }))}
+            productName={product.name}
+            fallback={PLACEHOLDER}
+          />
 
-            {/* Thumbnail grid */}
-            {images.length > 1 && (
-              <div className="grid grid-cols-4 gap-3">
-                {images.map((img) => (
-                  <div
-                    key={img.id}
-                    className="relative aspect-square rounded-xl overflow-hidden bg-neutral-100 ring-2 ring-transparent hover:ring-black transition-all cursor-pointer"
-                  >
-                    <Image
-                      src={img.image_url}
-                      alt={img.alt_text || product.name}
-                      fill
-                      sizes="120px"
-                      className="object-cover"
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Right — Product info */}
           <div className="lg:sticky lg:top-32 lg:self-start">
             <div className="flex flex-col gap-6">
-              {/* Brand */}
               {product.brand_name && (
                 <p className="text-xs tracking-[0.3em] uppercase text-neutral-400">
                   {product.brand_name}
                 </p>
               )}
 
-              {/* Name */}
-              <h1 className="text-2xl sm:text-3xl font-light leading-tight">
+              <h1 className="font-display text-3xl sm:text-4xl font-light leading-tight">
                 {product.name}
               </h1>
 
               {/* Price */}
-              <div className="flex items-center gap-3">
-                <span className="text-xl font-semibold">
-                  {formatPrice(Number(product.base_price))}
-                </span>
-              </div>
+              {hasPromo && promo ? (
+                <div className="space-y-2">
+                  <div className="flex items-baseline gap-3 flex-wrap">
+                    <span className="font-display text-3xl font-semibold text-red-600">
+                      {formatPrice(effectivePrice)}
+                    </span>
+                    <span className="text-base text-neutral-400 line-through">
+                      {formatPrice(basePrice)}
+                    </span>
+                    <span className="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-md">
+                      −{Math.round(promo.discount_percent)}%
+                    </span>
+                  </div>
+                  <div className="inline-flex items-center gap-2 text-xs text-red-700 bg-red-50 border border-red-100 rounded-full px-3 py-1.5">
+                    <Tag className="h-3 w-3" />
+                    <span className="font-medium">{promo.promotion_name}</span>
+                    <span className="text-red-500">·</span>
+                    <Clock className="h-3 w-3" />
+                    <span>
+                      Berakhir {new Date(promo.end_at).toLocaleDateString("id-ID", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </span>
+                  </div>
+                  <p className="text-xs text-neutral-500">
+                    Hemat {formatPrice(basePrice - effectivePrice)} ·{" "}
+                    Stok promo: {promo.promo_stock - promo.promo_sold}
+                  </p>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <span className="font-display text-2xl font-semibold">
+                    {formatPrice(basePrice)}
+                  </span>
+                </div>
+              )}
 
-              {/* Sold count */}
               {product.total_sold > 0 && (
                 <p className="text-xs text-neutral-400">
-                  {product.total_sold.toLocaleString("id-ID")} sold
+                  {product.total_sold.toLocaleString("id-ID")} terjual
                 </p>
               )}
 
-              {/* Divider */}
               <hr className="border-neutral-100" />
 
-              {/* Variant selector (client component) */}
               <VariantSelector
                 productId={product.id}
+                productSlug={product.slug}
                 productName={product.name}
-                basePrice={Number(product.base_price)}
+                productImage={images[0]?.image_url || product.primary_image || null}
+                basePrice={hasPromo ? effectivePrice : basePrice}
+                originalPrice={hasPromo ? basePrice : null}
                 hasVariant={!!product.has_variant}
                 variants={variants.map((v) => ({
                   id: v.id,
@@ -168,10 +185,8 @@ export default async function ProductDetailPage({
                 maxPurchase={product.max_purchase}
               />
 
-              {/* Divider */}
               <hr className="border-neutral-100" />
 
-              {/* Description */}
               {product.description && (
                 <details className="group" open>
                   <summary className="flex items-center justify-between cursor-pointer py-2">
@@ -188,7 +203,6 @@ export default async function ProductDetailPage({
                 </details>
               )}
 
-              {/* Shipping info */}
               <details className="group">
                 <summary className="flex items-center justify-between cursor-pointer py-2">
                   <span className="text-sm font-medium">Shipping & Returns</span>
@@ -210,21 +224,26 @@ export default async function ProductDetailPage({
         </div>
       </div>
 
-      {/* Related products */}
       {relatedProducts.length > 0 && (
         <section className="bg-white mt-16 py-20 px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-7xl">
-            <h2 className="text-xl font-light mb-10">You May Also Like</h2>
+            <h2 className="font-display text-2xl font-light mb-10">You May Also Like</h2>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-8 sm:gap-x-6">
-              {relatedProducts.map((p) => (
-                <ProductCard
-                  key={p.slug}
-                  slug={p.slug}
-                  name={p.name}
-                  price={Number(p.base_price)}
-                  imageUrl={p.primary_image || PLACEHOLDER}
-                />
-              ))}
+              {relatedProducts.map((p) => {
+                const rp = relatedPromos.get(p.id);
+                const price = rp ? rp.discount_price : Number(p.base_price);
+                const original = rp ? Number(p.base_price) : undefined;
+                return (
+                  <ProductCard
+                    key={p.slug}
+                    slug={p.slug}
+                    name={p.name}
+                    price={price}
+                    originalPrice={original}
+                    imageUrl={p.primary_image || PLACEHOLDER}
+                  />
+                );
+              })}
             </div>
           </div>
         </section>

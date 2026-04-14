@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/utils";
 import { cn } from "@/lib/utils";
-import { Minus, Plus, ShoppingBag, Zap } from "lucide-react";
+import { Minus, Plus, ShoppingBag, Zap, Check } from "lucide-react";
+import { useCart } from "@/lib/store/cart";
+import { useT } from "@/lib/i18n";
 
 interface Variant {
   id: number;
@@ -16,8 +19,11 @@ interface Variant {
 
 interface VariantSelectorProps {
   productId: number;
+  productSlug: string;
   productName: string;
+  productImage: string | null;
   basePrice: number;
+  originalPrice?: number | null;
   hasVariant: boolean;
   variants: Variant[];
   colorOptions: string[];
@@ -29,7 +35,9 @@ interface VariantSelectorProps {
 
 export function VariantSelector({
   productId,
+  productSlug,
   productName,
+  productImage,
   basePrice,
   hasVariant,
   variants,
@@ -39,32 +47,25 @@ export function VariantSelector({
   minPurchase,
   maxPurchase,
 }: VariantSelectorProps) {
+  const router = useRouter();
+  const { t } = useT();
+  const addItem = useCart((s) => s.addItem);
   const [selectedColor, setSelectedColor] = useState<string>("");
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [quantity, setQuantity] = useState(minPurchase);
   const [addedToCart, setAddedToCart] = useState(false);
 
-  // Find matching variant
   const selectedVariant = hasVariant
-    ? variants.find(
-        (v) => v.color === selectedColor && v.size === selectedSize
-      )
+    ? variants.find((v) => v.color === selectedColor && v.size === selectedSize)
     : null;
 
   const currentPrice = selectedVariant ? selectedVariant.price : basePrice;
-  const currentStock = hasVariant
-    ? selectedVariant?.stock ?? 0
-    : productStock;
-
-  const maxQty = maxPurchase
-    ? Math.min(maxPurchase, currentStock)
-    : currentStock;
-
+  const currentStock = hasVariant ? selectedVariant?.stock ?? 0 : productStock;
+  const maxQty = maxPurchase ? Math.min(maxPurchase, currentStock) : currentStock;
   const canAddToCart = hasVariant
     ? !!selectedVariant && currentStock > 0
     : currentStock > 0;
 
-  // Check which sizes are available for selected color
   function isSizeAvailable(size: string): boolean {
     if (!selectedColor) return variants.some((v) => v.size === size && v.stock > 0);
     return variants.some(
@@ -72,19 +73,41 @@ export function VariantSelector({
     );
   }
 
+  function buildVariantLabel(): string | null {
+    if (!hasVariant) return null;
+    const parts = [selectedColor, selectedSize].filter(Boolean);
+    return parts.length > 0 ? parts.join(" / ") : null;
+  }
+
   function handleAddToCart() {
-    // TODO: Integrate with cart API/store
+    if (!canAddToCart) return;
+    addItem({
+      productId,
+      variantId: selectedVariant?.id ?? null,
+      productSlug,
+      productName,
+      variantLabel: buildVariantLabel(),
+      imageUrl: productImage,
+      unitPrice: currentPrice,
+      quantity,
+      maxStock: currentStock,
+    });
     setAddedToCart(true);
     setTimeout(() => setAddedToCart(false), 2000);
   }
 
+  function handleBuyNow() {
+    if (!canAddToCart) return;
+    handleAddToCart();
+    router.push("/cart");
+  }
+
   return (
     <div className="flex flex-col gap-6">
-      {/* Color selector */}
       {colorOptions.length > 0 && (
         <div>
           <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-medium">Color</span>
+            <span className="text-sm font-medium">{t("product.color")}</span>
             {selectedColor && (
               <span className="text-sm text-neutral-500">{selectedColor}</span>
             )}
@@ -112,11 +135,10 @@ export function VariantSelector({
         </div>
       )}
 
-      {/* Size selector */}
       {sizeOptions.length > 0 && (
         <div>
           <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-medium">Size</span>
+            <span className="text-sm font-medium">{t("product.size")}</span>
             {selectedSize && (
               <span className="text-sm text-neutral-500">{selectedSize}</span>
             )}
@@ -151,16 +173,14 @@ export function VariantSelector({
         </div>
       )}
 
-      {/* Stock info */}
       {canAddToCart && currentStock <= 10 && currentStock > 0 && (
         <p className="text-xs text-amber-600 font-medium">
-          Only {currentStock} left in stock
+          {t("product.onlyLeft", { n: currentStock })}
         </p>
       )}
 
-      {/* Quantity */}
       <div>
-        <span className="text-sm font-medium mb-3 block">Quantity</span>
+        <span className="text-sm font-medium mb-3 block">{t("product.quantity")}</span>
         <div className="flex items-center gap-1">
           <button
             onClick={() => setQuantity(Math.max(minPurchase, quantity - 1))}
@@ -182,7 +202,6 @@ export function VariantSelector({
         </div>
       </div>
 
-      {/* Price display */}
       <div className="flex items-center gap-3">
         <span className="text-lg font-semibold">
           {formatPrice(currentPrice * quantity)}
@@ -194,7 +213,6 @@ export function VariantSelector({
         )}
       </div>
 
-      {/* Action buttons */}
       <div className="flex flex-col gap-3">
         <Button
           onClick={handleAddToCart}
@@ -203,7 +221,7 @@ export function VariantSelector({
           size="lg"
           className="w-full"
         >
-          <ShoppingBag className="h-4 w-4" />
+          {addedToCart ? <Check className="h-4 w-4" /> : <ShoppingBag className="h-4 w-4" />}
           {addedToCart
             ? "Added to Cart!"
             : hasVariant && (!selectedColor || !selectedSize)
@@ -216,6 +234,7 @@ export function VariantSelector({
           size="lg"
           className="w-full"
           disabled={!canAddToCart}
+          onClick={handleBuyNow}
         >
           <Zap className="h-4 w-4" />
           Buy Now

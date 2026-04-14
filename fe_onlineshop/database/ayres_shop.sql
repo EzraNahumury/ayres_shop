@@ -609,7 +609,7 @@ INSERT INTO `admin_roles` (`name`, `description`) VALUES
 
 -- Default admin (password: admin123)
 INSERT INTO `admins` (`role_id`, `name`, `email`, `password_hash`) VALUES
-(1, 'Admin Ayres', 'admin@ayres.com', '$2a$10$8KzaNdKIMyOkASCekPEzku.MRtpWiKEwwp32aFGshCP73c4Y0E4jG');
+(1, 'Admin Ayres', 'admin@ayres.com', '$2b$10$pv4ntgtpcuhyqM2XmyAlz.qvknDBlP8lrTx95H4SDnQr3uwR9Y2Ce');
 
 -- Categories
 INSERT INTO `product_categories` (`name`, `slug`, `sort_order`) VALUES

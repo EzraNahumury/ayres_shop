@@ -1,12 +1,40 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { ProductCard } from "@/components/shop/product-card";
-import { getProductsByCategory, getCategories } from "@/lib/queries/products";
+import {
+  getProductsByCategory,
+  getCategories,
+  getLiveProducts,
+  getBestSellers,
+  searchProductsByKeywords,
+} from "@/lib/queries/products";
+import { getActiveStorePromosByProductIds } from "@/lib/queries/pricing";
 import { db } from "@/lib/db";
 import { RowDataPacket } from "mysql2";
 import type { Metadata } from "next";
 
 const PLACEHOLDER = "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=600&h=800&fit=crop";
+
+const SPECIAL_SLUGS: Record<string, { name: string; description: string }> = {
+  "new-arrivals": {
+    name: "New Arrivals",
+    description: "Produk terbaru yang baru saja masuk ke toko.",
+  },
+  "best-sellers": {
+    name: "Best Sellers",
+    description: "Produk paling populer dipesan customer.",
+  },
+  sale: {
+    name: "Sale",
+    description: "Produk dengan diskon spesial.",
+  },
+};
+
+function slugToTitle(slug: string): string {
+  return slug
+    .split("-")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
 
 export const dynamic = "force-dynamic";
 
@@ -16,11 +44,12 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
+  if (SPECIAL_SLUGS[slug]) return { title: SPECIAL_SLUGS[slug].name };
   const [rows] = await db.query<RowDataPacket[]>(
     "SELECT name FROM product_categories WHERE slug = ? LIMIT 1",
     [slug]
   );
-  const name = rows[0]?.name || slug;
+  const name = rows[0]?.name || slugToTitle(slug);
   return {
     title: name,
     description: `Browse ${name} collection at AYRES`,
@@ -36,23 +65,47 @@ export default async function CategoryPage({
 }) {
   const { slug } = await params;
   const { sort } = await searchParams;
-
-  // Verify category exists
-  const [catRows] = await db.query<RowDataPacket[]>(
-    "SELECT * FROM product_categories WHERE slug = ? AND is_active = 1 LIMIT 1",
-    [slug]
-  );
-
-  if (catRows.length === 0) {
-    notFound();
-  }
-
-  const category = catRows[0];
   const currentSort = sort || "newest";
 
-  const [products, categories] = await Promise.all([
-    getProductsByCategory(slug, currentSort),
+  let category: { name: string; description: string | null; slug: string };
+  let products: Awaited<ReturnType<typeof getProductsByCategory>>;
+  let isFuzzy = false;
+
+  if (SPECIAL_SLUGS[slug]) {
+    category = {
+      name: SPECIAL_SLUGS[slug].name,
+      description: SPECIAL_SLUGS[slug].description,
+      slug,
+    };
+    products =
+      slug === "best-sellers"
+        ? await getBestSellers(40)
+        : await getLiveProducts(40);
+  } else {
+    const [catRows] = await db.query<RowDataPacket[]>(
+      "SELECT * FROM product_categories WHERE slug = ? AND is_active = 1 LIMIT 1",
+      [slug]
+    );
+    if (catRows.length > 0) {
+      const cat = catRows[0];
+      category = { name: cat.name, description: cat.description, slug: cat.slug };
+      products = await getProductsByCategory(slug, currentSort);
+    } else {
+      const keywords = slug.split("-").filter(Boolean);
+      const fallbackName = slugToTitle(slug);
+      category = {
+        name: fallbackName,
+        description: `Hasil pencarian untuk "${fallbackName}".`,
+        slug,
+      };
+      products = await searchProductsByKeywords(keywords, 40);
+      isFuzzy = true;
+    }
+  }
+
+  const [categories, promoMap] = await Promise.all([
     getCategories(),
+    getActiveStorePromosByProductIds(products.map((p) => p.id)),
   ]);
 
   const sortOptions = [
@@ -92,20 +145,23 @@ export default async function CategoryPage({
               All
             </Link>
             {categories
-              .filter((c: any) => c.product_count > 0)
-              .map((cat: any) => (
-                <Link
-                  key={cat.slug}
-                  href={`/collections/${cat.slug}`}
-                  className={`shrink-0 px-5 py-2 rounded-full text-sm font-medium transition-colors ${
-                    cat.slug === slug
-                      ? "bg-black text-white"
-                      : "border border-neutral-200 text-neutral-600 hover:border-black hover:text-black"
-                  }`}
-                >
-                  {cat.name}
-                </Link>
-              ))}
+              .filter((c) => Number((c as { product_count: number }).product_count) > 0)
+              .map((cat) => {
+                const c = cat as { slug: string; name: string };
+                return (
+                  <Link
+                    key={c.slug}
+                    href={`/collections/${c.slug}`}
+                    className={`shrink-0 px-5 py-2 rounded-full text-sm font-medium transition-colors ${
+                      c.slug === slug
+                        ? "bg-black text-white"
+                        : "border border-neutral-200 text-neutral-600 hover:border-black hover:text-black"
+                    }`}
+                  >
+                    {c.name}
+                  </Link>
+                );
+              })}
           </div>
         </div>
       </div>
@@ -117,42 +173,51 @@ export default async function CategoryPage({
             {products.length} product{products.length !== 1 ? "s" : ""}
           </p>
 
-          {/* Sort dropdown */}
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-neutral-500 hidden sm:inline">Sort by:</span>
-            <div className="flex gap-1">
-              {sortOptions.map((opt) => (
-                <Link
-                  key={opt.value}
-                  href={`/collections/${slug}?sort=${opt.value}`}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                    currentSort === opt.value
-                      ? "bg-black text-white"
-                      : "text-neutral-500 hover:bg-neutral-100"
-                  }`}
-                >
-                  {opt.label}
-                </Link>
-              ))}
+          {!isFuzzy && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-neutral-500 hidden sm:inline">Sort by:</span>
+              <div className="flex gap-1">
+                {sortOptions.map((opt) => (
+                  <Link
+                    key={opt.value}
+                    href={`/collections/${slug}?sort=${opt.value}`}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                      currentSort === opt.value
+                        ? "bg-black text-white"
+                        : "text-neutral-500 hover:bg-neutral-100"
+                    }`}
+                  >
+                    {opt.label}
+                  </Link>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-8 sm:gap-x-6">
-          {products.map((product) => (
-            <ProductCard
-              key={product.slug}
-              slug={product.slug}
-              name={product.name}
-              price={Number(product.base_price)}
-              imageUrl={product.primary_image || PLACEHOLDER}
-            />
-          ))}
+          {products.map((product) => {
+            const promo = promoMap.get(product.id);
+            return (
+              <ProductCard
+                key={product.slug}
+                slug={product.slug}
+                name={product.name}
+                price={promo ? promo.discount_price : Number(product.base_price)}
+                originalPrice={promo ? Number(product.base_price) : undefined}
+                imageUrl={product.primary_image || PLACEHOLDER}
+              />
+            );
+          })}
         </div>
 
         {products.length === 0 && (
           <div className="text-center py-20">
-            <p className="text-neutral-400 text-lg">No products in this category yet</p>
+            <p className="text-neutral-400 text-lg">
+              {isFuzzy
+                ? `Belum ada produk untuk "${category.name}"`
+                : "No products in this category yet"}
+            </p>
             <Link
               href="/collections"
               className="inline-block mt-4 text-sm font-medium text-black underline"

@@ -128,3 +128,20 @@ export async function searchProducts(query: string, limit = 20): Promise<Product
   const [rows] = await db.query<ProductRow[]>(sql, [searchTerm, searchTerm, limit]);
   return rows;
 }
+
+export async function searchProductsByKeywords(
+  keywords: string[],
+  limit = 40
+): Promise<ProductRow[]> {
+  const cleaned = keywords.map((k) => k.trim()).filter((k) => k.length > 0);
+  if (cleaned.length === 0) return [];
+  const conditions = cleaned.map(() => `(p.name LIKE ? OR p.description LIKE ?)`).join(" AND ");
+  const params: unknown[] = [];
+  for (const k of cleaned) {
+    params.push(`%${k}%`, `%${k}%`);
+  }
+  params.push(limit);
+  const sql = `${PRODUCT_BASE_QUERY} WHERE p.status = 'live' AND ${conditions} ORDER BY p.total_sold DESC, p.created_at DESC LIMIT ?`;
+  const [rows] = await db.query<ProductRow[]>(sql, params);
+  return rows;
+}

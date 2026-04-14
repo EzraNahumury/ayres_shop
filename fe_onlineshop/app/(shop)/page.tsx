@@ -3,6 +3,7 @@ import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import { ProductCard } from "@/components/shop/product-card";
 import { getBestSellers, getNewArrivals, getCategories } from "@/lib/queries/products";
+import { getActiveStorePromosByProductIds } from "@/lib/queries/pricing";
 import { formatPrice } from "@/lib/utils";
 
 // Category hero images (static — categories don't have images seeded yet)
@@ -26,8 +27,13 @@ export default async function HomePage() {
     getCategories(),
   ]);
 
+  const allIds = Array.from(
+    new Set([...bestSellers.map((p) => p.id), ...newArrivals.map((p) => p.id)])
+  );
+  const promoMap = await getActiveStorePromosByProductIds(allIds);
+
   // Only show top 3 categories with products
-  const topCategories = categories.filter((c: any) => c.product_count > 0).slice(0, 3);
+  const topCategories = categories.filter((c) => Number((c as { product_count: number }).product_count) > 0).slice(0, 3);
 
   return (
     <div>
@@ -122,16 +128,20 @@ export default async function HomePage() {
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-8 sm:gap-x-6">
-            {bestSellers.map((product) => (
-              <ProductCard
-                key={product.slug}
-                slug={product.slug}
-                name={product.name}
-                price={Number(product.base_price)}
-                imageUrl={product.primary_image || PLACEHOLDER_IMG}
-                badge={product.total_sold > 200 ? "Best Seller" : undefined}
-              />
-            ))}
+            {bestSellers.map((product) => {
+              const promo = promoMap.get(product.id);
+              return (
+                <ProductCard
+                  key={product.slug}
+                  slug={product.slug}
+                  name={product.name}
+                  price={promo ? promo.discount_price : Number(product.base_price)}
+                  originalPrice={promo ? Number(product.base_price) : undefined}
+                  imageUrl={product.primary_image || PLACEHOLDER_IMG}
+                  badge={product.total_sold > 200 ? "Best Seller" : undefined}
+                />
+              );
+            })}
           </div>
 
           <div className="mt-10 text-center sm:hidden">
@@ -209,16 +219,20 @@ export default async function HomePage() {
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-8 sm:gap-x-6">
-            {newArrivals.map((product) => (
-              <ProductCard
-                key={product.slug}
-                slug={product.slug}
-                name={product.name}
-                price={Number(product.base_price)}
-                imageUrl={product.primary_image || PLACEHOLDER_IMG}
-                badge="New"
-              />
-            ))}
+            {newArrivals.map((product) => {
+              const promo = promoMap.get(product.id);
+              return (
+                <ProductCard
+                  key={product.slug}
+                  slug={product.slug}
+                  name={product.name}
+                  price={promo ? promo.discount_price : Number(product.base_price)}
+                  originalPrice={promo ? Number(product.base_price) : undefined}
+                  imageUrl={product.primary_image || PLACEHOLDER_IMG}
+                  badge="New"
+                />
+              );
+            })}
           </div>
         </div>
       </section>
