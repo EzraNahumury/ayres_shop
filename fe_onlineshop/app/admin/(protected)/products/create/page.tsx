@@ -2,10 +2,13 @@ import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { CreateProductForm } from "./create-form";
 import { Stepper, PRODUCT_STEPS } from "@/components/admin/stepper";
+import { getActiveCategories } from "@/lib/queries/admin/categories";
 
 export const dynamic = "force-dynamic";
 
-export default function CreateProductPage() {
+export default async function CreateProductPage() {
+  const categories = await getActiveCategories();
+
   return (
     <div className="p-8 max-w-3xl">
       <Link
@@ -27,7 +30,7 @@ export default function CreateProductPage() {
       </div>
 
       <div className="bg-white border border-neutral-200 rounded-xl p-6">
-        <CreateProductForm />
+        <CreateProductForm categories={categories} />
       </div>
     </div>
   );

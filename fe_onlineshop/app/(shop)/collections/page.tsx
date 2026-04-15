@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { ProductCard } from "@/components/shop/product-card";
 import { getLiveProducts, getCategories } from "@/lib/queries/products";
 import type { Metadata } from "next";
@@ -7,15 +6,6 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Collections",
   description: "Browse all AYRES collections",
-};
-
-const categoryImages: Record<string, string> = {
-  tops: "https://images.unsplash.com/photo-1434389677669-e08b4cda3a12?w=400&h=300&fit=crop",
-  bottoms: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=400&h=300&fit=crop",
-  outerwear: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=400&h=300&fit=crop",
-  dresses: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=400&h=300&fit=crop",
-  accessories: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&h=300&fit=crop",
-  footwear: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=300&fit=crop",
 };
 
 const PLACEHOLDER = "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=600&h=800&fit=crop";
@@ -51,7 +41,7 @@ export default async function CollectionsPage() {
               All
             </Link>
             {categories
-              .filter((c: any) => c.product_count > 0)
+              .filter((c: any) => c.parent_id === null)
               .map((cat: any) => (
                 <Link
                   key={cat.slug}

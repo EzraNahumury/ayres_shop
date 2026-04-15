@@ -5,16 +5,7 @@ import { ProductCard } from "@/components/shop/product-card";
 import { getBestSellers, getNewArrivals, getCategories } from "@/lib/queries/products";
 import { getActiveStorePromosByProductIds } from "@/lib/queries/pricing";
 import { formatPrice } from "@/lib/utils";
-
-// Category hero images (static — categories don't have images seeded yet)
-const categoryImages: Record<string, string> = {
-  tops: "https://images.unsplash.com/photo-1434389677669-e08b4cda3a12?w=600&h=400&fit=crop",
-  bottoms: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=600&h=400&fit=crop",
-  outerwear: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=600&h=400&fit=crop",
-  dresses: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=600&h=400&fit=crop",
-  accessories: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&h=400&fit=crop",
-  footwear: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&h=400&fit=crop",
-};
+import { CategoryCarousel } from "@/components/shop/category-carousel";
 
 const PLACEHOLDER_IMG = "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=600&h=800&fit=crop";
 
@@ -32,8 +23,38 @@ export default async function HomePage() {
   );
   const promoMap = await getActiveStorePromosByProductIds(allIds);
 
-  // Only show top 3 categories with products
-  const topCategories = categories.filter((c) => Number((c as { product_count: number }).product_count) > 0).slice(0, 3);
+  // Static illustrations for the category carousel — files in public/kategori/.
+  const CATEGORY_ICONS: Record<string, string> = {
+    "t-shirt": "/kategori/T-Shirt.png",
+    "polo-shirt": "/kategori/polo_shirt.png",
+    shirt: "/kategori/shirt.png",
+    vest: "/kategori/vest.png",
+    jersey: "/kategori/jersey.png",
+    jacket: "/kategori/jaket.png",
+    shorts: "/kategori/shorts.png",
+    pants: "/kategori/pants.png",
+    shinguard: "/kategori/shinguard.png",
+    "elbow-pad": "/kategori/elbow_pad.png",
+    "knee-pad": "/kategori/knee_pad.png",
+    cap: "/kategori/cap.png",
+    socks: "/kategori/socks.png",
+    lainnya: "/kategori/lainnya.png",
+  };
+
+  // Categories carousel: show leaf categories (no children) + top-level without children.
+  // Parents that have children are skipped — their sub-categories show instead, Shopee-style.
+  const parentIds = new Set(
+    (categories as any[])
+      .filter((c) => c.parent_id !== null)
+      .map((c) => c.parent_id)
+  );
+  const carouselCategories = (categories as any[])
+    .filter((c) => !parentIds.has(c.id))
+    .map((c) => ({
+      slug: c.slug,
+      name: c.name,
+      hero_image: CATEGORY_ICONS[c.slug] ?? (c.hero_image as string | null),
+    }));
 
   return (
     <div>
@@ -70,40 +91,22 @@ export default async function HomePage() {
       </section>
 
       {/* ==================== CATEGORIES ==================== */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
+      <section className="py-14 sm:py-16 px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
-          <div className="text-center mb-12">
-            <p className="text-xs tracking-[0.3em] uppercase text-neutral-400 mb-2">
-              Explore
-            </p>
-            <h2 className="text-2xl sm:text-3xl font-light">Shop by Category</h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {topCategories.map((cat: any) => (
+          <div className="bg-white rounded-2xl border border-neutral-100 shadow-sm p-6 sm:p-8">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-sm tracking-[0.25em] uppercase text-neutral-500 font-medium">
+                Kategori
+              </h2>
               <Link
-                key={cat.slug}
-                href={`/collections/${cat.slug}`}
-                className="group relative aspect-[3/2] rounded-2xl overflow-hidden bg-neutral-100"
+                href="/collections"
+                className="text-xs text-neutral-500 hover:text-black transition-colors"
               >
-                <Image
-                  src={categoryImages[cat.slug] || PLACEHOLDER_IMG}
-                  alt={cat.name}
-                  fill
-                  sizes="(max-width: 768px) 100vw, 33vw"
-                  className="object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors duration-300" />
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-white text-lg tracking-[0.2em] uppercase font-medium">
-                    {cat.name}
-                  </span>
-                  <span className="text-white/70 text-xs mt-1">
-                    {cat.product_count} Products
-                  </span>
-                </div>
+                Lihat semua
               </Link>
-            ))}
+            </div>
+
+            <CategoryCarousel categories={carouselCategories} />
           </div>
         </div>
       </section>

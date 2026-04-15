@@ -291,15 +291,24 @@ export interface CreateDraftInput {
   name: string;
   sku?: string | null;
   gtin?: string | null;
+  category_id?: number | null;
   createdBy?: number;
 }
 
 export async function createDraftProduct(input: CreateDraftInput): Promise<number> {
   const slug = await generateUniqueSlug(input.name);
   const [result] = await db.query<ResultSetHeader>(
-    `INSERT INTO products (name, slug, sku, gtin, status, created_by, updated_by)
-     VALUES (?, ?, ?, ?, 'draft', ?, ?)`,
-    [input.name, slug, input.sku || null, input.gtin || null, input.createdBy || null, input.createdBy || null]
+    `INSERT INTO products (category_id, name, slug, sku, gtin, status, created_by, updated_by)
+     VALUES (?, ?, ?, ?, ?, 'draft', ?, ?)`,
+    [
+      input.category_id ?? null,
+      input.name,
+      slug,
+      input.sku || null,
+      input.gtin || null,
+      input.createdBy || null,
+      input.createdBy || null,
+    ]
   );
   return result.insertId;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,14 @@ export function TabInfo({
   const [name, setName] = useState(product.name);
   const [categoryId, setCategoryId] = useState<string>(product.category_id?.toString() || "");
   const [brandId, setBrandId] = useState<string>(product.brand_id?.toString() || "");
+
+  const categoryGroups = useMemo(() => {
+    const parents = categories.filter((c) => c.parent_id === null);
+    return parents.map((parent) => ({
+      parent,
+      children: categories.filter((c) => c.parent_id === parent.id),
+    }));
+  }, [categories]);
   const [sku, setSku] = useState(product.sku || "");
   const [gtin, setGtin] = useState(product.gtin || "");
   const [saving, setSaving] = useState(false);
@@ -87,11 +95,22 @@ export function TabInfo({
               className="h-11 rounded-lg border border-neutral-300 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
             >
               <option value="">— Pilih kategori —</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
+              {categoryGroups.map(({ parent, children }) =>
+                children.length === 0 ? (
+                  <option key={parent.id} value={parent.id}>
+                    {parent.name}
+                  </option>
+                ) : (
+                  <optgroup key={parent.id} label={parent.name}>
+                    <option value={parent.id}>{parent.name} (semua)</option>
+                    {children.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        &nbsp;&nbsp;{c.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                )
+              )}
             </select>
           </div>
 

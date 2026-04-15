@@ -108,6 +108,27 @@ export default async function CategoryPage({
     getActiveStorePromosByProductIds(products.map((p) => p.id)),
   ]);
 
+  // Context-aware chip bar:
+  // - On a parent category page (e.g. /collections/apparel) → show its children
+  // - On a child page (e.g. /collections/jersey) → show siblings (same parent)
+  // - Fallback (special/fuzzy) → show top-level parents
+  const currentCat = categories.find((c: any) => c.slug === slug) as
+    | { id: number; parent_id: number | null; slug: string }
+    | undefined;
+
+  let chipCategories: any[];
+  if (currentCat && currentCat.parent_id === null) {
+    chipCategories = (categories as any[]).filter(
+      (c) => c.parent_id === currentCat.id
+    );
+  } else if (currentCat && currentCat.parent_id !== null) {
+    chipCategories = (categories as any[]).filter(
+      (c) => c.parent_id === currentCat.parent_id
+    );
+  } else {
+    chipCategories = (categories as any[]).filter((c) => c.parent_id === null);
+  }
+
   const sortOptions = [
     { value: "newest", label: "Newest" },
     { value: "popular", label: "Most Popular" },
@@ -144,24 +165,22 @@ export default async function CategoryPage({
             >
               All
             </Link>
-            {categories
-              .filter((c) => Number((c as { product_count: number }).product_count) > 0)
-              .map((cat) => {
-                const c = cat as { slug: string; name: string };
-                return (
-                  <Link
-                    key={c.slug}
-                    href={`/collections/${c.slug}`}
-                    className={`shrink-0 px-5 py-2 rounded-full text-sm font-medium transition-colors ${
-                      c.slug === slug
-                        ? "bg-black text-white"
-                        : "border border-neutral-200 text-neutral-600 hover:border-black hover:text-black"
-                    }`}
-                  >
-                    {c.name}
-                  </Link>
-                );
-              })}
+            {chipCategories.map((cat: any) => {
+              const c = cat as { slug: string; name: string };
+              return (
+                <Link
+                  key={c.slug}
+                  href={`/collections/${c.slug}`}
+                  className={`shrink-0 px-5 py-2 rounded-full text-sm font-medium transition-colors ${
+                    c.slug === slug
+                      ? "bg-black text-white"
+                      : "border border-neutral-200 text-neutral-600 hover:border-black hover:text-black"
+                  }`}
+                >
+                  {c.name}
+                </Link>
+              );
+            })}
           </div>
         </div>
       </div>

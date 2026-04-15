@@ -179,6 +179,15 @@ body {
   animation: admin-scan 12s linear infinite;
 }
 
+/* Hide scrollbar for horizontal carousels */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* Dialog & toast animations */
 @keyframes ui-fade-in {
   from {

@@ -23,6 +23,8 @@ export async function POST(req: NextRequest) {
   const name = String(formData.get("name") || "").trim();
   const sku = String(formData.get("sku") || "").trim() || null;
   const gtin = String(formData.get("gtin") || "").trim() || null;
+  const categoryRaw = String(formData.get("category_id") || "").trim();
+  const category_id = categoryRaw ? Number(categoryRaw) : null;
 
   if (!name) {
     return NextResponse.json({ error: "Nama produk wajib diisi" }, { status: 400 });
@@ -30,11 +32,15 @@ export async function POST(req: NextRequest) {
   if (name.length > 255) {
     return NextResponse.json({ error: "Nama produk terlalu panjang" }, { status: 400 });
   }
+  if (category_id !== null && !Number.isFinite(category_id)) {
+    return NextResponse.json({ error: "Kategori tidak valid" }, { status: 400 });
+  }
 
   const productId = await createDraftProduct({
     name,
     sku,
     gtin,
+    category_id,
     createdBy: admin.id,
   });
 

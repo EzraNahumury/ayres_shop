@@ -1,16 +1,22 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { ImagePlus, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import type { CategoryRow } from "@/lib/queries/admin/categories";
 
-export function CreateProductForm() {
+export function CreateProductForm({
+  categories,
+}: {
+  categories: CategoryRow[];
+}) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const [name, setName] = useState("");
+  const [categoryId, setCategoryId] = useState("");
   const [sku, setSku] = useState("");
   const [gtin, setGtin] = useState("");
   const [noGtin, setNoGtin] = useState(false);
@@ -18,6 +24,14 @@ export function CreateProductForm() {
   const [previews, setPreviews] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const categoryGroups = useMemo(() => {
+    const parents = categories.filter((c) => c.parent_id === null);
+    return parents.map((parent) => ({
+      parent,
+      children: categories.filter((c) => c.parent_id === parent.id),
+    }));
+  }, [categories]);
 
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const fl = e.target.files;
@@ -57,6 +71,7 @@ export function CreateProductForm() {
     try {
       const fd = new FormData();
       fd.append("name", name.trim());
+      if (categoryId) fd.append("category_id", categoryId);
       if (sku.trim()) fd.append("sku", sku.trim());
       if (gtin.trim() && !noGtin) fd.append("gtin", gtin.trim());
       for (const f of files) fd.append("images", f);
@@ -133,6 +148,39 @@ export function CreateProductForm() {
         required
         maxLength={255}
       />
+
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="category" className="text-sm font-medium text-neutral-700">
+          Kategori
+        </label>
+        <select
+          id="category"
+          value={categoryId}
+          onChange={(e) => setCategoryId(e.target.value)}
+          className="h-11 rounded-lg border border-neutral-300 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+        >
+          <option value="">— Pilih kategori —</option>
+          {categoryGroups.map(({ parent, children }) =>
+            children.length === 0 ? (
+              <option key={parent.id} value={parent.id}>
+                {parent.name}
+              </option>
+            ) : (
+              <optgroup key={parent.id} label={parent.name}>
+                <option value={parent.id}>{parent.name} (semua)</option>
+                {children.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    &nbsp;&nbsp;{c.name}
+                  </option>
+                ))}
+              </optgroup>
+            )
+          )}
+        </select>
+        <p className="text-xs text-neutral-500">
+          Produk akan muncul di menu <strong>{categoryGroups.map((g) => g.parent.name).join(" / ")}</strong> sesuai kategori.
+        </p>
+      </div>
 
       <Input
         id="sku"

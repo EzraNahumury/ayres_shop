@@ -83,8 +83,15 @@ export async function getProductsByCategory(
   else if (sort === "price_desc") orderBy = "p.base_price DESC";
   else if (sort === "popular") orderBy = "p.total_sold DESC";
 
-  const sql = `${PRODUCT_BASE_QUERY} WHERE p.status = 'live' AND c.slug = ? ORDER BY ${orderBy} ${limit ? `LIMIT ${limit}` : ""}`;
-  const [rows] = await db.query<ProductRow[]>(sql, [categorySlug]);
+  // Parent slug → include products from all descendant categories as well.
+  const sql = `${PRODUCT_BASE_QUERY}
+    WHERE p.status = 'live'
+      AND (
+        c.slug = ?
+        OR c.parent_id = (SELECT id FROM product_categories WHERE slug = ? LIMIT 1)
+      )
+    ORDER BY ${orderBy} ${limit ? `LIMIT ${limit}` : ""}`;
+  const [rows] = await db.query<ProductRow[]>(sql, [categorySlug, categorySlug]);
   return rows;
 }
 
@@ -112,11 +119,24 @@ export async function getProductImages(productId: number): Promise<ImageRow[]> {
 
 export async function getCategories() {
   const [rows] = await db.query<RowDataPacket[]>(
-    `SELECT c.*, COUNT(p.id) as product_count
+    `SELECT
+        c.*,
+        (SELECT COUNT(*) FROM products p2
+           JOIN product_categories c2 ON c2.id = p2.category_id
+          WHERE p2.status = 'live'
+            AND (c2.id = c.id OR c2.parent_id = c.id)
+        ) AS product_count,
+        (SELECT pi.image_url
+           FROM products p3
+           JOIN product_images pi ON pi.product_id = p3.id
+           JOIN product_categories c3 ON c3.id = p3.category_id
+          WHERE p3.status = 'live'
+            AND pi.is_primary = 1
+            AND (c3.id = c.id OR c3.parent_id = c.id)
+          ORDER BY p3.total_sold DESC, p3.created_at DESC
+          LIMIT 1) AS hero_image
      FROM product_categories c
-     LEFT JOIN products p ON p.category_id = c.id AND p.status = 'live'
      WHERE c.is_active = 1
-     GROUP BY c.id
      ORDER BY c.sort_order ASC`
   );
   return rows;
