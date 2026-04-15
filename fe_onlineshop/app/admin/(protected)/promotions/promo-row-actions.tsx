@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Pencil, Trash2 } from "lucide-react";
+import { confirm } from "@/components/ui/confirm";
+import { toast } from "@/components/ui/toast";
 
 export function PromoRowActions({
   promoId,
@@ -16,9 +18,13 @@ export function PromoRowActions({
   const [busy, setBusy] = useState(false);
 
   async function handleDelete() {
-    if (!window.confirm(`Hapus promo "${promoName}"? Tindakan tidak bisa dibatalkan.`)) {
-      return;
-    }
+    const ok = await confirm({
+      title: `Hapus promo "${promoName}"?`,
+      description: "Tindakan ini tidak bisa dibatalkan.",
+      confirmText: "Hapus",
+      variant: "danger",
+    });
+    if (!ok) return;
     setBusy(true);
     try {
       const res = await fetch(`/api/admin/promotions/${promoId}`, {
@@ -26,9 +32,10 @@ export function PromoRowActions({
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        alert(data.error || "Gagal menghapus promo");
+        toast.error(data.error || "Gagal menghapus promo");
         return;
       }
+      toast.success("Promo berhasil dihapus");
       router.refresh();
     } finally {
       setBusy(false);

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { confirm } from "@/components/ui/confirm";
 
 export function OrderActions({
   orderId,
@@ -61,10 +62,14 @@ export function OrderActions({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => {
-              if (window.confirm("Batalkan pesanan ini?")) {
-                changeStatus("cancelled");
-              }
+            onClick={async () => {
+              const ok = await confirm({
+                title: "Batalkan pesanan ini?",
+                description: "Pesanan akan dibatalkan secara permanen.",
+                confirmText: "Batalkan Pesanan",
+                variant: "danger",
+              });
+              if (ok) changeStatus("cancelled");
             }}
             loading={busy === "cancelled"}
             disabled={busy !== null}

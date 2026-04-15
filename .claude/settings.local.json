@@ -25,7 +25,8 @@
       "Bash(node -e ':*)",
       "Bash(ls:*)",
       "Bash(cp D:/ayres_shop/fe_onlineshop/public/logo/ayres-logo.png D:/ayres_shop/fe_onlineshop/app/icon.png)",
-      "Bash(rm D:/ayres_shop/fe_onlineshop/app/favicon.ico)"
+      "Bash(rm D:/ayres_shop/fe_onlineshop/app/favicon.ico)",
+      "Bash(mysql --version)"
     ]
   }
 }

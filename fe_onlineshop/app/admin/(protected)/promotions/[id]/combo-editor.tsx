@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ProductPicker, type PickerProduct } from "@/components/admin/product-picker";
 import { ItemActiveToggle } from "./item-toggle";
 import { formatPrice } from "@/lib/utils";
+import { confirm } from "@/components/ui/confirm";
 
 interface MainRow {
   id: number;
@@ -84,7 +85,12 @@ export function ComboEditor({
   }
 
   async function removeItem(itemId: number, kind: "combo_main" | "combo_addon") {
-    if (!window.confirm("Hapus item ini?")) return;
+    const ok = await confirm({
+      title: "Hapus item ini?",
+      confirmText: "Hapus",
+      variant: "danger",
+    });
+    if (!ok) return;
     setBusy(itemId);
     setError(null);
     try {

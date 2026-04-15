@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ProductPicker, type PickerProduct } from "@/components/admin/product-picker";
 import { ItemActiveToggle } from "./item-toggle";
 import { formatPrice } from "@/lib/utils";
+import { confirm } from "@/components/ui/confirm";
 
 interface StoreItemRow {
   id: number;
@@ -61,7 +62,12 @@ export function StoreItemsEditor({
   }
 
   async function handleRemove(itemId: number) {
-    if (!window.confirm("Hapus produk ini dari promo?")) return;
+    const ok = await confirm({
+      title: "Hapus produk dari promo?",
+      confirmText: "Hapus",
+      variant: "danger",
+    });
+    if (!ok) return;
     setBusy(itemId);
     setError(null);
     try {

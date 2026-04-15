@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ProductPicker, type PickerProduct } from "@/components/admin/product-picker";
 import { ItemActiveToggle } from "./item-toggle";
 import { formatPrice } from "@/lib/utils";
+import { confirm } from "@/components/ui/confirm";
 
 type DiscountType = "percentage" | "fixed_amount" | "fixed_price";
 
@@ -70,7 +71,12 @@ export function PackageEditor({
   }
 
   async function handleRemoveProduct(itemId: number) {
-    if (!window.confirm("Hapus produk ini dari paket?")) return;
+    const ok = await confirm({
+      title: "Hapus produk dari paket?",
+      confirmText: "Hapus",
+      variant: "danger",
+    });
+    if (!ok) return;
     setBusy(itemId);
     setError(null);
     try {

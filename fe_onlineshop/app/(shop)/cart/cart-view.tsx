@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useCart, selectCartTotal } from "@/lib/store/cart";
 import { formatPrice } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
+import { confirm } from "@/components/ui/confirm";
 
 const PLACEHOLDER = "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=200&h=200&fit=crop";
 
@@ -127,8 +128,13 @@ export function CartView() {
         </ul>
 
         <button
-          onClick={() => {
-            if (window.confirm(t("cart.clearConfirm"))) clear();
+          onClick={async () => {
+            const ok = await confirm({
+              title: t("cart.clearConfirm"),
+              confirmText: t("cart.clear"),
+              variant: "danger",
+            });
+            if (ok) clear();
           }}
           className="mt-3 text-xs text-neutral-500 hover:text-red-600 transition-colors"
         >

@@ -75,10 +75,10 @@ export function Footer() {
               alt="AYRES"
               width={360}
               height={96}
-              className="h-20 w-auto mb-2 relative"
+              className="h-20 w-auto relative"
             />
 
-            <div className="relative mb-8">
+            <div className="relative mb-8 -mt-3">
               <h3 className="font-display text-3xl sm:text-[2rem] font-bold leading-[1.05] tracking-tight">
                 <span className="block text-white">DEADLINE</span>
                 <span className="block bg-gradient-to-r from-red-500 via-red-600 to-red-500 bg-clip-text text-transparent">

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Manrope, Bricolage_Grotesque } from "next/font/google";
 import "./globals.css";
+import { ConfirmDialog } from "@/components/ui/confirm";
+import { Toaster } from "@/components/ui/toast";
 
 const sans = Manrope({
   variable: "--font-sans",
@@ -35,7 +37,11 @@ export default function RootLayout({
       lang="id"
       className={`${sans.variable} ${display.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col font-sans">{children}</body>
+      <body className="min-h-full flex flex-col font-sans">
+        {children}
+        <ConfirmDialog />
+        <Toaster />
+      </body>
     </html>
   );
 }

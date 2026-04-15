@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { TabNav, type TabDef } from "@/components/admin/tab-nav";
 import { Button } from "@/components/ui/button";
+import { confirm } from "@/components/ui/confirm";
 import type {
   ProductDetail,
   ProductImageRow,
@@ -112,10 +113,14 @@ export function EditShell({
         {product.status !== "archived" && (
           <Button
             variant="outline"
-            onClick={() => {
-              if (window.confirm("Arsipkan produk ini? Produk tidak akan tampil di etalase customer.")) {
-                changeStatus("archived");
-              }
+            onClick={async () => {
+              const ok = await confirm({
+                title: "Arsipkan produk ini?",
+                description: "Produk tidak akan tampil di etalase customer.",
+                confirmText: "Arsipkan",
+                variant: "danger",
+              });
+              if (ok) changeStatus("archived");
             }}
             loading={statusBusy === "archived"}
             disabled={statusBusy !== null}

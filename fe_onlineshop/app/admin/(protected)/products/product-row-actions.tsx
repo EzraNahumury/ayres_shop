@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Pencil, Archive } from "lucide-react";
+import { confirm } from "@/components/ui/confirm";
+import { toast } from "@/components/ui/toast";
 
 export function ProductRowActions({
   productId,
@@ -20,9 +22,13 @@ export function ProductRowActions({
 
   async function handleArchive() {
     if (!canArchive) return;
-    if (!window.confirm(`Arsipkan produk "${productName}"? Produk tidak akan tampil di etalase customer.`)) {
-      return;
-    }
+    const ok = await confirm({
+      title: `Arsipkan produk "${productName}"?`,
+      description: "Produk tidak akan tampil di etalase customer.",
+      confirmText: "Arsipkan",
+      variant: "danger",
+    });
+    if (!ok) return;
     setBusy(true);
     try {
       const res = await fetch(`/api/admin/products/${productId}/archive`, {
@@ -30,9 +36,10 @@ export function ProductRowActions({
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        alert(data.error || "Gagal mengarsipkan produk");
+        toast.error(data.error || "Gagal mengarsipkan produk");
         return;
       }
+      toast.success("Produk berhasil diarsipkan");
       router.refresh();
     } finally {
       setBusy(false);

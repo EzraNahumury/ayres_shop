@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import type { PromoStatus } from "@/lib/queries/admin/promotions";
+import { confirm } from "@/components/ui/confirm";
 
 export function PromoActionBar({
   id,
@@ -39,7 +40,13 @@ export function PromoActionBar({
   }
 
   async function handleDelete() {
-    if (!window.confirm("Hapus promo ini? Tindakan tidak bisa dibatalkan.")) return;
+    const ok = await confirm({
+      title: "Hapus promo ini?",
+      description: "Tindakan ini tidak bisa dibatalkan.",
+      confirmText: "Hapus",
+      variant: "danger",
+    });
+    if (!ok) return;
     setBusy("delete");
     try {
       const res = await fetch(`/api/admin/promotions/${id}`, { method: "DELETE" });
@@ -87,10 +94,14 @@ export function PromoActionBar({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => {
-              if (window.confirm("Batalkan promo ini? Promo tidak akan aktif lagi.")) {
-                changeStatus("cancelled");
-              }
+            onClick={async () => {
+              const ok = await confirm({
+                title: "Batalkan promo ini?",
+                description: "Promo tidak akan aktif lagi.",
+                confirmText: "Batalkan Promo",
+                variant: "danger",
+              });
+              if (ok) changeStatus("cancelled");
             }}
             loading={busy === "cancelled"}
             disabled={busy !== null}

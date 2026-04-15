@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ImagePlus, Star, Trash2, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { confirm } from "@/components/ui/confirm";
 
 export interface UploaderImage {
   id: number;
@@ -52,7 +53,13 @@ export function ImageUploader({
   }
 
   async function handleDelete(imageId: number) {
-    if (!window.confirm("Hapus foto ini?")) return;
+    const ok = await confirm({
+      title: "Hapus foto ini?",
+      description: "Foto akan dihapus permanen dari produk.",
+      confirmText: "Hapus",
+      variant: "danger",
+    });
+    if (!ok) return;
     setBusyId(imageId);
     try {
       const res = await fetch(`/api/admin/products/${productId}/images/${imageId}`, {

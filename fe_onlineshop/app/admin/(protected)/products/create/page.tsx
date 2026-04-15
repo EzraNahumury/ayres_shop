@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { CreateProductForm } from "./create-form";
+import { Stepper, PRODUCT_STEPS } from "@/components/admin/stepper";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +21,10 @@ export default function CreateProductPage() {
         Isi informasi dasar produk. Anda dapat melengkapi spesifikasi, harga, variasi, dan
         pengiriman pada langkah berikutnya.
       </p>
+
+      <div className="bg-white border border-neutral-200 rounded-xl p-6 mb-6">
+        <Stepper steps={PRODUCT_STEPS} current={1} />
+      </div>
 
       <div className="bg-white border border-neutral-200 rounded-xl p-6">
         <CreateProductForm />
