@@ -3,23 +3,44 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart, selectCartTotal } from "@/lib/store/cart";
 import { formatPrice } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
 import { confirm } from "@/components/ui/confirm";
+import { toast } from "@/components/ui/toast";
 
 const PLACEHOLDER = "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=200&h=200&fit=crop";
 
 export function CartView() {
   const { t } = useT();
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  const [checkingOut, setCheckingOut] = useState(false);
   const items = useCart((s) => s.items);
   const total = useCart(selectCartTotal);
   const updateQuantity = useCart((s) => s.updateQuantity);
   const removeItem = useCart((s) => s.removeItem);
   const clear = useCart((s) => s.clear);
+
+  async function handleCheckout() {
+    setCheckingOut(true);
+    try {
+      const res = await fetch("/api/auth/me", { cache: "no-store" });
+      if (res.ok) {
+        router.push("/checkout");
+      } else {
+        toast.info("Silakan login terlebih dahulu untuk melanjutkan checkout.");
+        router.push("/login?next=/checkout");
+      }
+    } catch {
+      router.push("/login?next=/checkout");
+    } finally {
+      setCheckingOut(false);
+    }
+  }
 
   useEffect(() => {
     setMounted(true);
@@ -159,11 +180,14 @@ export function CartView() {
             <span>{t("cart.total")}</span>
             <span className="tabular-nums">{formatPrice(total)}</span>
           </div>
-          <Link href="/checkout" className="block">
-            <Button size="lg" className="w-full">
-              {t("cart.checkout")}
-            </Button>
-          </Link>
+          <Button
+            size="lg"
+            className="w-full"
+            onClick={handleCheckout}
+            loading={checkingOut}
+          >
+            {t("cart.checkout")}
+          </Button>
           <Link
             href="/"
             className="block text-center text-xs text-neutral-500 hover:text-black"

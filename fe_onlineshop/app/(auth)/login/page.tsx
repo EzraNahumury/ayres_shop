@@ -11,6 +11,12 @@ function LoginInner() {
   const router = useRouter();
   const search = useSearchParams();
   const oauthError = search.get("error");
+  const nextParam = search.get("next");
+  // Only allow same-origin relative paths to prevent open-redirect.
+  const safeNext =
+    nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//")
+      ? nextParam
+      : "/";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -56,7 +62,7 @@ function LoginInner() {
         setError(data.error || "Login gagal");
         return;
       }
-      router.push("/");
+      router.push(safeNext);
       router.refresh();
     } catch {
       setError("Terjadi kesalahan jaringan. Coba lagi.");
