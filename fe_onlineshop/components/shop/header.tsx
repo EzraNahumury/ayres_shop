@@ -71,7 +71,11 @@ const navigation: NavItem[] = [
   { key: "nav.sale", href: "/collections/sale" },
 ];
 
-export function Header() {
+export function Header({
+  initialUser,
+}: {
+  initialUser?: { id: number; name: string; email: string } | null;
+}) {
   const { t } = useT();
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -202,7 +206,7 @@ export function Header() {
               >
                 <Search className="h-5 w-5" />
               </button>
-              <UserMenu className="hidden sm:flex" />
+              <UserMenu className="hidden sm:flex" initialUser={initialUser} />
               <Link
                 href="/wishlist"
                 className="hidden sm:flex p-2.5 text-neutral-700 hover:text-black transition-colors"

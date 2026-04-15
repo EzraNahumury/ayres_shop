@@ -22,29 +22,24 @@ const menuItems = [
   { href: "/account/addresses", label: "Buku Alamat", icon: MapPin },
 ];
 
-export function UserMenu({ className }: { className?: string }) {
+export function UserMenu({
+  className,
+  initialUser,
+}: {
+  className?: string;
+  initialUser?: MeUser;
+}) {
   const router = useRouter();
-  const [user, setUser] = useState<MeUser>(null);
-  const [loaded, setLoaded] = useState(false);
+  // User state is known from the server (via the layout) — no fetch delay,
+  // no race condition when navigating back from other pages.
+  const [user, setUser] = useState<MeUser>(initialUser ?? null);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
+  // Keep client state in sync when the server prop changes (e.g. after login).
   useEffect(() => {
-    let cancelled = false;
-    fetch("/api/auth/me", { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (cancelled) return;
-        setUser(data?.user ?? null);
-        setLoaded(true);
-      })
-      .catch(() => {
-        if (!cancelled) setLoaded(true);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    setUser(initialUser ?? null);
+  }, [initialUser]);
 
   useEffect(() => {
     if (!open) return;
@@ -72,7 +67,7 @@ export function UserMenu({ className }: { className?: string }) {
     router.refresh();
   }
 
-  if (loaded && !user) {
+  if (!user) {
     return (
       <Link
         href="/login"

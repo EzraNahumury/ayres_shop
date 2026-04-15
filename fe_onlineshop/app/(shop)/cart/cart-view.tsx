@@ -17,7 +17,14 @@ const PLACEHOLDER = "https://images.unsplash.com/photo-1441984904996-e0b6ba687e0
 export function CartView() {
   const { t } = useT();
   const router = useRouter();
-  const [mounted, setMounted] = useState(false);
+  // Track Zustand-persist hydration. Initialize synchronously from
+  // `persist.hasHydrated()` so remounts (e.g. back-navigation) that happen
+  // AFTER the store already hydrated don't get stuck on a loading state
+  // waiting for a hydration event that already fired.
+  const [hydrated, setHydrated] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return useCart.persist.hasHydrated();
+  });
   const [checkingOut, setCheckingOut] = useState(false);
   const items = useCart((s) => s.items);
   const total = useCart(selectCartTotal);
@@ -43,10 +50,15 @@ export function CartView() {
   }
 
   useEffect(() => {
-    setMounted(true);
+    if (useCart.persist.hasHydrated()) {
+      setHydrated(true);
+      return;
+    }
+    const unsub = useCart.persist.onFinishHydration(() => setHydrated(true));
+    return unsub;
   }, []);
 
-  if (!mounted) {
+  if (!hydrated) {
     return (
       <div className="text-center py-20 text-neutral-400 text-sm">{t("cart.loading")}</div>
     );
