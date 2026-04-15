@@ -15,6 +15,9 @@ import { formatPrice } from "@/lib/utils";
 import { ProductCard } from "@/components/shop/product-card";
 import { VariantSelector } from "./variant-selector";
 import { ProductGallery } from "./product-gallery";
+import { WishlistButton } from "@/components/shop/wishlist-button";
+import { getCurrentUser } from "@/lib/user-auth";
+import { isInWishlist } from "@/lib/queries/wishlist";
 import type { Metadata } from "next";
 
 const PLACEHOLDER = "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=600&h=800&fit=crop";
@@ -45,12 +48,17 @@ export default async function ProductDetailPage({
 
   if (!product) notFound();
 
-  const [variants, images, related, promo] = await Promise.all([
+  const [variants, images, related, promo, currentUser] = await Promise.all([
     getProductVariants(product.id),
     getProductImages(product.id),
     getBestSellers(4),
     getActiveStorePromoForProduct(product.id),
+    getCurrentUser(),
   ]);
+
+  const initialInWishlist = currentUser
+    ? await isInWishlist(currentUser.id, product.id)
+    : false;
 
   const colorOptions = [
     ...new Set(variants.map((v) => v.option_value_1).filter(Boolean)),
@@ -111,9 +119,17 @@ export default async function ProductDetailPage({
                 </p>
               )}
 
-              <h1 className="font-display text-3xl sm:text-4xl font-light leading-tight">
-                {product.name}
-              </h1>
+              <div className="flex items-start justify-between gap-4">
+                <h1 className="font-display text-3xl sm:text-4xl font-light leading-tight flex-1">
+                  {product.name}
+                </h1>
+                <WishlistButton
+                  productId={product.id}
+                  initialInWishlist={initialInWishlist}
+                  loggedIn={!!currentUser}
+                  nextPath={`/products/${product.slug}`}
+                />
+              </div>
 
               {/* Price */}
               {hasPromo && promo ? (

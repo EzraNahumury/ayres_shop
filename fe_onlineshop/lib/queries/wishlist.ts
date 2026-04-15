@@ -56,3 +56,14 @@ export async function removeFromWishlist(
   );
   return result.affectedRows > 0;
 }
+
+export async function isInWishlist(
+  userId: number,
+  productId: number
+): Promise<boolean> {
+  const [rows] = await db.query<WishlistItem[]>(
+    `SELECT id FROM wishlists WHERE user_id = ? AND product_id = ? LIMIT 1`,
+    [userId, productId]
+  );
+  return rows.length > 0;
+}

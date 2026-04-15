@@ -206,7 +206,6 @@ export function Header({
               >
                 <Search className="h-5 w-5" />
               </button>
-              <UserMenu className="hidden sm:flex" initialUser={initialUser} />
               <Link
                 href="/wishlist"
                 className="hidden sm:flex p-2.5 text-neutral-700 hover:text-black transition-colors"
@@ -222,6 +221,7 @@ export function Header({
                 <ShoppingBag className="h-5 w-5" />
                 <CartBadge />
               </Link>
+              <UserMenu className="hidden sm:flex" initialUser={initialUser} />
               <div className="hidden sm:block ml-1 pl-1 border-l border-neutral-200">
                 <LanguageSwitcher />
               </div>

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/utils";
 import { cn } from "@/lib/utils";
-import { Minus, Plus, ShoppingBag, Zap, Check } from "lucide-react";
+import { Minus, Plus, Check } from "lucide-react";
 import { useCart } from "@/lib/store/cart";
 import { useT } from "@/lib/i18n";
 
@@ -219,11 +219,11 @@ export function VariantSelector({
           disabled={!canAddToCart}
           variant={addedToCart ? "secondary" : "primary"}
           size="lg"
-          className="w-full"
+          className="w-full tracking-wide"
         >
-          {addedToCart ? <Check className="h-4 w-4" /> : <ShoppingBag className="h-4 w-4" />}
+          {addedToCart && <Check className="h-4 w-4" />}
           {addedToCart
-            ? "Added to Cart!"
+            ? "Added to Cart"
             : hasVariant && (!selectedColor || !selectedSize)
               ? "Select Options"
               : "Add to Cart"}
@@ -232,11 +232,10 @@ export function VariantSelector({
         <Button
           variant="outline"
           size="lg"
-          className="w-full"
+          className="w-full tracking-wide"
           disabled={!canAddToCart}
           onClick={handleBuyNow}
         >
-          <Zap className="h-4 w-4" />
           Buy Now
         </Button>
       </div>
