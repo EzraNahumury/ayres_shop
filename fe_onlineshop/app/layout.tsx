@@ -18,8 +18,8 @@ const display = Bricolage_Grotesque({
 
 export const metadata: Metadata = {
   title: {
-    default: "AYRES — Modern Essentials",
-    template: "%s | AYRES",
+    default: "Ayres Modern Essentials",
+    template: "%s | Ayres Modern Essentials",
   },
   description:
     "Modern essentials crafted with intention. Quality materials, timeless design.",

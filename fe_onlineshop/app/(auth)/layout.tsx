@@ -15,7 +15,7 @@ export default function AuthLayout({
       />
       <div
         aria-hidden
-        className="auth-bg-blob pointer-events-none absolute -bottom-40 -right-32 h-[32rem] w-[32rem] rounded-full bg-gradient-to-tr from-amber-100/40 to-transparent blur-3xl"
+        className="auth-bg-blob pointer-events-none absolute -bottom-40 -right-32 h-[32rem] w-[32rem] rounded-full bg-gradient-to-tr from-red-200/40 to-transparent blur-3xl"
         style={{ animationDelay: "-6s" }}
       />
 

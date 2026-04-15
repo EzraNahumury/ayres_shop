@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Mail, MessageCircle } from "lucide-react";
+import { Mail, Globe } from "lucide-react";
 import { useT, type DictKey } from "@/lib/i18n";
 
 const footerLinks: {
@@ -65,29 +65,29 @@ export function Footer() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-10">
           {/* Brand column */}
-          <div className="col-span-2 md:col-span-1 relative">
+          <div className="col-span-2 md:col-span-1 relative md:-mt-6">
             <div
               aria-hidden
-              className="absolute -top-4 -left-4 w-32 h-32 rounded-full bg-gradient-to-br from-amber-500/10 to-transparent blur-2xl pointer-events-none"
+              className="absolute -top-4 -left-4 w-40 h-40 rounded-full bg-gradient-to-br from-red-600/15 to-transparent blur-2xl pointer-events-none"
             />
             <Image
               src="/logo/ayres-logo.png"
               alt="AYRES"
-              width={180}
-              height={48}
-              className="h-10 w-auto mb-8 relative"
+              width={360}
+              height={96}
+              className="h-20 w-auto mb-2 relative"
             />
 
             <div className="relative mb-8">
               <h3 className="font-display text-3xl sm:text-[2rem] font-bold leading-[1.05] tracking-tight">
                 <span className="block text-white">DEADLINE</span>
-                <span className="block bg-gradient-to-r from-amber-300 via-amber-400 to-amber-200 bg-clip-text text-transparent">
+                <span className="block bg-gradient-to-r from-red-500 via-red-600 to-red-500 bg-clip-text text-transparent">
                   AMAN.
                 </span>
                 <span className="block text-white mt-2">POLA AYRES</span>
                 <span className="block text-white/90">BEDA KELAS.</span>
               </h3>
-              <div className="mt-4 h-px w-16 bg-gradient-to-r from-amber-400/60 to-transparent" />
+              <div className="mt-4 h-px w-16 bg-gradient-to-r from-red-600/70 to-transparent" />
             </div>
 
             <div className="flex items-center gap-2">
@@ -97,8 +97,8 @@ export function Footer() {
               <SocialIcon href="#" label="TikTok">
                 <TiktokIcon />
               </SocialIcon>
-              <SocialIcon href="#" label="WhatsApp">
-                <MessageCircle className="h-4 w-4" />
+              <SocialIcon href="/" label="Website">
+                <Globe className="h-4 w-4" />
               </SocialIcon>
               <SocialIcon href="#" label="Email">
                 <Mail className="h-4 w-4" />
