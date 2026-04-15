@@ -16,6 +16,7 @@ import {
 import { cn } from "@/lib/utils";
 import { CartBadge } from "./cart-badge";
 import { LanguageSwitcher } from "./language-switcher";
+import { UserMenu } from "./user-menu";
 import { useT, type DictKey } from "@/lib/i18n";
 
 interface NavColumn {
@@ -201,13 +202,7 @@ export function Header() {
               >
                 <Search className="h-5 w-5" />
               </button>
-              <Link
-                href="/login"
-                className="hidden sm:flex p-2.5 text-neutral-700 hover:text-black transition-colors"
-                aria-label={t("nav.account")}
-              >
-                <User className="h-5 w-5" />
-              </Link>
+              <UserMenu className="hidden sm:flex" />
               <Link
                 href="/wishlist"
                 className="hidden sm:flex p-2.5 text-neutral-700 hover:text-black transition-colors"
