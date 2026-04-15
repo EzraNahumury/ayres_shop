@@ -206,6 +206,7 @@ export interface ProductVariantRow {
   stock: number;
   weight_grams: number | null;
   is_active: number;
+  image_url: string | null;
 }
 
 export interface ShippingProfileRow {
@@ -241,7 +242,7 @@ export async function getProductImages(productId: number): Promise<ProductImageR
 export async function getProductVariants(productId: number): Promise<ProductVariantRow[]> {
   const [rows] = await db.query<RowDataPacket[]>(
     `SELECT id, product_id, sku, gtin, option_name_1, option_value_1,
-            option_name_2, option_value_2, price, stock, weight_grams, is_active
+            option_name_2, option_value_2, price, stock, weight_grams, is_active, image_url
        FROM product_variants
       WHERE product_id = ?
       ORDER BY id ASC`,
@@ -402,10 +403,77 @@ export async function replaceVariants(
   productId: number,
   variants: VariantInput[]
 ): Promise<void> {
-  await db.query<ResultSetHeader>(
-    `DELETE FROM product_variants WHERE product_id = ?`,
+  // Upsert strategy — preserve variant IDs (and thus image_url) across saves.
+  // Natural key = (option_value_1, option_value_2).
+  const [existingRows] = await db.query<RowDataPacket[]>(
+    `SELECT id, option_value_1, option_value_2 FROM product_variants WHERE product_id = ?`,
     [productId]
   );
+  const keyOf = (v1: string | null, v2: string | null) =>
+    `${(v1 ?? "").trim()}__${(v2 ?? "").trim()}`;
+  const existingByKey = new Map<string, number>();
+  for (const r of existingRows) {
+    existingByKey.set(keyOf(r.option_value_1, r.option_value_2), r.id);
+  }
+
+  const keepIds = new Set<number>();
+  for (const v of variants) {
+    const key = keyOf(v.option_value_1, v.option_value_2);
+    const existingId = existingByKey.get(key);
+    if (existingId) {
+      keepIds.add(existingId);
+      await db.query<ResultSetHeader>(
+        `UPDATE product_variants
+            SET sku = ?, gtin = ?, option_name_1 = ?, option_name_2 = ?,
+                price = ?, stock = ?, weight_grams = ?, is_active = 1
+          WHERE id = ? AND product_id = ?`,
+        [
+          v.sku,
+          v.gtin,
+          v.option_name_1,
+          v.option_name_2,
+          v.price,
+          v.stock,
+          v.weight_grams,
+          existingId,
+          productId,
+        ]
+      );
+    } else {
+      await db.query<ResultSetHeader>(
+        `INSERT INTO product_variants
+           (product_id, sku, gtin, option_name_1, option_value_1, option_name_2, option_value_2,
+            price, stock, weight_grams, is_active)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+        [
+          productId,
+          v.sku,
+          v.gtin,
+          v.option_name_1,
+          v.option_value_1,
+          v.option_name_2,
+          v.option_value_2,
+          v.price,
+          v.stock,
+          v.weight_grams,
+        ]
+      );
+    }
+  }
+
+  // Delete variants that no longer appear in the input.
+  for (const [key, id] of existingByKey.entries()) {
+    if (!keepIds.has(id)) {
+      // Only delete variants we haven't kept.
+      // key variable unused but kept for clarity.
+      void key;
+      await db.query<ResultSetHeader>(
+        `DELETE FROM product_variants WHERE id = ? AND product_id = ?`,
+        [id, productId]
+      );
+    }
+  }
+
   if (variants.length === 0) {
     await db.query<ResultSetHeader>(
       `UPDATE products SET has_variant = 0 WHERE id = ?`,
@@ -413,29 +481,7 @@ export async function replaceVariants(
     );
     return;
   }
-  const values = variants.map(() => `(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`).join(", ");
-  const params: unknown[] = [];
-  for (const v of variants) {
-    params.push(
-      productId,
-      v.sku,
-      v.gtin,
-      v.option_name_1,
-      v.option_value_1,
-      v.option_name_2,
-      v.option_value_2,
-      v.price,
-      v.stock,
-      v.weight_grams
-    );
-  }
-  await db.query<ResultSetHeader>(
-    `INSERT INTO product_variants
-       (product_id, sku, gtin, option_name_1, option_value_1, option_name_2, option_value_2,
-        price, stock, weight_grams, is_active)
-     VALUES ${values}`,
-    params
-  );
+
   const totalStock = variants.reduce((sum, v) => sum + (v.stock || 0), 0);
   const minPrice = Math.min(...variants.map((v) => v.price));
   await db.query<ResultSetHeader>(

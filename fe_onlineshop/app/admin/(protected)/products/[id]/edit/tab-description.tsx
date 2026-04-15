@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import type { ProductDetail } from "@/lib/queries/admin/products";
 
-const MIN = 50;
+const MIN = 20;
 const MAX = 5000;
 
 export function TabDescription({ product }: { product: ProductDetail }) {

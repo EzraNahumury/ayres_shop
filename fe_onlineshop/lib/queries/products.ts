@@ -33,6 +33,7 @@ export interface VariantRow extends RowDataPacket {
   price: string;
   stock: number;
   is_active: number;
+  image_url: string | null;
 }
 
 export interface ImageRow extends RowDataPacket {

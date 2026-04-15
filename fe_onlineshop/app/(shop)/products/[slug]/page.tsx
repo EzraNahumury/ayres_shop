@@ -109,6 +109,12 @@ export default async function ProductDetailPage({
             }))}
             productName={product.name}
             fallback={PLACEHOLDER}
+            productId={product.id}
+            variantImages={Object.fromEntries(
+              variants
+                .filter((v) => v.image_url && v.option_value_1)
+                .map((v) => [v.option_value_1 as string, v.image_url as string])
+            )}
           />
 
           <div className="lg:sticky lg:top-32 lg:self-start">
@@ -193,6 +199,7 @@ export default async function ProductDetailPage({
                   size: v.option_value_2 || "",
                   price: Number(v.price),
                   stock: v.stock,
+                  image_url: v.image_url,
                 }))}
                 colorOptions={colorOptions}
                 sizeOptions={sizeOptions}

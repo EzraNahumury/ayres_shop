@@ -41,6 +41,7 @@ function variantsToState(
     options2,
     rows: variants.map((v) => ({
       key: makeKey(v.option_value_1 || "", v.option_value_2 || ""),
+      id: v.id,
       option_name_1: v.option_name_1,
       option_value_1: v.option_value_1,
       option_name_2: v.option_name_2,
@@ -48,6 +49,7 @@ function variantsToState(
       price: Number(v.price),
       stock: v.stock,
       sku: v.sku || "",
+      image_url: v.image_url,
     })),
   };
 }
@@ -143,7 +145,12 @@ export function TabSales({
         </p>
       </div>
 
-      <VariantBuilder initial={vb} onChange={setVb} />
+      <VariantBuilder
+        initial={vb}
+        productId={product.id}
+        onChange={setVb}
+        onImageUpdate={() => router.refresh()}
+      />
 
       {!vb.enabled && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-5 border border-neutral-200 rounded-lg bg-white">

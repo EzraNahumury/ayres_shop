@@ -1,12 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
+import { Plus, Trash2, ImagePlus, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/toast";
 
 export interface VariantValue {
   key: string;
+  id?: number | null;
   option_name_1: string | null;
   option_value_1: string | null;
   option_name_2: string | null;
@@ -14,6 +17,7 @@ export interface VariantValue {
   price: number | "";
   stock: number | "";
   sku: string;
+  image_url?: string | null;
 }
 
 export interface VariantBuilderState {
@@ -31,10 +35,14 @@ function makeKey(v1: string, v2: string) {
 
 export function VariantBuilder({
   initial,
+  productId,
   onChange,
+  onImageUpdate,
 }: {
   initial: VariantBuilderState;
+  productId?: number;
   onChange: (s: VariantBuilderState) => void;
+  onImageUpdate?: () => void;
 }) {
   const [state, setState] = useState<VariantBuilderState>(initial);
 
@@ -196,7 +204,8 @@ export function VariantBuilder({
                 <table className="w-full text-sm">
                   <thead className="bg-neutral-50 text-xs uppercase tracking-wider text-neutral-500">
                     <tr>
-                      <th className="text-left px-5 py-2 font-medium">Variasi</th>
+                      <th className="text-left px-5 py-2 font-medium">Foto</th>
+                      <th className="text-left px-3 py-2 font-medium">Variasi</th>
                       <th className="text-left px-3 py-2 font-medium">SKU</th>
                       <th className="text-right px-3 py-2 font-medium">Harga</th>
                       <th className="text-right px-3 py-2 font-medium">Stok</th>
@@ -206,6 +215,17 @@ export function VariantBuilder({
                     {state.rows.map((r, i) => (
                       <tr key={r.key}>
                         <td className="px-5 py-2">
+                          <VariantImageCell
+                            productId={productId}
+                            variantId={r.id ?? null}
+                            currentUrl={r.image_url ?? null}
+                            onUploaded={(url) => {
+                              setRow(i, { image_url: url });
+                              onImageUpdate?.();
+                            }}
+                          />
+                        </td>
+                        <td className="px-3 py-2">
                           <div className="font-medium text-black">{r.option_value_1}</div>
                           {r.option_value_2 && (
                             <div className="text-xs text-neutral-500">{r.option_value_2}</div>
@@ -326,6 +346,107 @@ function VariantGroup({
         </>
       )}
     </div>
+  );
+}
+
+function VariantImageCell({
+  productId,
+  variantId,
+  currentUrl,
+  onUploaded,
+}: {
+  productId: number | undefined;
+  variantId: number | null;
+  currentUrl: string | null;
+  onUploaded: (url: string | null) => void;
+}) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const disabled = !productId || !variantId;
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !productId || !variantId) return;
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("image", file);
+      const res = await fetch(
+        `/api/admin/products/${productId}/variants/${variantId}/image`,
+        { method: "POST", body: fd }
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Gagal mengunggah");
+        return;
+      }
+      onUploaded(data.image_url);
+      toast.success("Foto variasi tersimpan");
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
+
+  async function handleRemove() {
+    if (!productId || !variantId) return;
+    setUploading(true);
+    try {
+      const res = await fetch(
+        `/api/admin/products/${productId}/variants/${variantId}/image`,
+        { method: "DELETE" }
+      );
+      if (!res.ok) return;
+      onUploaded(null);
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  if (disabled) {
+    return (
+      <div
+        className="w-16 h-16 rounded-lg border-2 border-dashed border-neutral-200 bg-neutral-50 flex items-center justify-center text-[10px] text-neutral-400 text-center leading-tight px-1"
+        title="Simpan variasi dulu untuk bisa unggah foto"
+      >
+        Simpan dulu
+      </div>
+    );
+  }
+
+  if (currentUrl) {
+    return (
+      <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-neutral-200 bg-neutral-50 group">
+        <Image src={currentUrl} alt="" fill sizes="64px" className="object-cover" />
+        <button
+          type="button"
+          onClick={handleRemove}
+          disabled={uploading}
+          className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-white shadow border border-neutral-200 text-neutral-500 hover:text-red-600 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+          aria-label="Hapus foto"
+        >
+          <X className="h-3 w-3" />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <label className="w-16 h-16 rounded-lg border-2 border-dashed border-neutral-300 bg-white flex flex-col items-center justify-center gap-0.5 cursor-pointer hover:border-black hover:bg-neutral-50 transition-colors">
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        className="hidden"
+        onChange={handleFile}
+        disabled={uploading}
+      />
+      <ImagePlus className="h-4 w-4 text-neutral-400" />
+      <span className="text-[10px] text-neutral-400">
+        {uploading ? "..." : "Foto"}
+      </span>
+    </label>
   );
 }
 

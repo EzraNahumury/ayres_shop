@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/utils";
@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { Minus, Plus, Check } from "lucide-react";
 import { useCart } from "@/lib/store/cart";
 import { useT } from "@/lib/i18n";
+import { useProductView } from "@/lib/store/product-view";
 
 interface Variant {
   id: number;
@@ -15,6 +16,7 @@ interface Variant {
   size: string;
   price: number;
   stock: number;
+  image_url?: string | null;
 }
 
 interface VariantSelectorProps {
@@ -50,10 +52,19 @@ export function VariantSelector({
   const router = useRouter();
   const { t } = useT();
   const addItem = useCart((s) => s.addItem);
+  const setProductView = useProductView((s) => s.set);
+  const resetProductView = useProductView((s) => s.reset);
   const [selectedColor, setSelectedColor] = useState<string>("");
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [quantity, setQuantity] = useState(minPurchase);
   const [addedToCart, setAddedToCart] = useState(false);
+
+  // Broadcast color selection to the gallery (which reads from useProductView)
+  // so it can swap to the matching variant image.
+  useEffect(() => {
+    setProductView(productId, selectedColor);
+    return () => resetProductView();
+  }, [productId, selectedColor, setProductView, resetProductView]);
 
   const selectedVariant = hasVariant
     ? variants.find((v) => v.color === selectedColor && v.size === selectedSize)
