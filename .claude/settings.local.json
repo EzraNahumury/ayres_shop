@@ -26,7 +26,10 @@
       "Bash(ls:*)",
       "Bash(cp D:/ayres_shop/fe_onlineshop/public/logo/ayres-logo.png D:/ayres_shop/fe_onlineshop/app/icon.png)",
       "Bash(rm D:/ayres_shop/fe_onlineshop/app/favicon.ico)",
-      "Bash(mysql --version)"
+      "Bash(mysql --version)",
+      "Bash(file \"banner web.jpeg\")",
+      "Bash(python -c \"from PIL import Image; im = Image.open\\('banner web.jpeg'\\); print\\(f'{im.size[0]}x{im.size[1]} ratio={im.size[0]/im.size[1]:.3f}'\\)\")",
+      "Bash(node -e \"const fs=require\\('fs'\\); const b=fs.readFileSync\\('banner web.jpeg'\\); let i=2; while\\(i<b.length\\){const m=b[i+1]; i+=2; if\\(m>=0xC0&&m<=0xCF&&m!==0xC4&&m!==0xC8&&m!==0xCC\\){console.log\\(b.readUInt16BE\\(i+5\\)+'x'+b.readUInt16BE\\(i+3\\)\\); break;} i+=b.readUInt16BE\\(i\\);}\")"
     ]
   }
 }

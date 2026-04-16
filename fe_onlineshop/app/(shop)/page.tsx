@@ -6,6 +6,7 @@ import { getBestSellers, getNewArrivals, getCategories } from "@/lib/queries/pro
 import { getActiveStorePromosByProductIds } from "@/lib/queries/pricing";
 import { formatPrice } from "@/lib/utils";
 import { CategoryCarousel } from "@/components/shop/category-carousel";
+import { HeroTypewriter } from "@/components/shop/hero-typewriter";
 
 const PLACEHOLDER_IMG = "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=600&h=800&fit=crop";
 
@@ -59,33 +60,26 @@ export default async function HomePage() {
   return (
     <div>
       {/* ==================== HERO SECTION ==================== */}
-      <section className="relative h-[85vh] min-h-[600px] bg-neutral-900 overflow-hidden">
+      <section className="relative aspect-[1990/610] min-h-[280px] bg-neutral-900 overflow-hidden">
         <Image
-          src="https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=1920&h=1080&fit=crop"
+          src="/banner%20web.jpeg"
           alt="AYRES Collection"
           fill
           priority
-          className="object-cover opacity-70"
+          sizes="100vw"
+          className="object-cover object-center"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
-        <div className="relative h-full flex flex-col items-center justify-end pb-20 px-4 text-center">
-          <p className="text-sm tracking-[0.4em] uppercase text-neutral-300 mb-4">
-            New Collection 2026
-          </p>
-          <h2 className="text-4xl sm:text-5xl md:text-6xl font-light text-white mb-6 max-w-2xl leading-tight">
-            Modern Essentials, <br />
-            <span className="font-medium">Timeless Style</span>
-          </h2>
-          <p className="text-neutral-300 text-base sm:text-lg mb-10 max-w-md">
-            Crafted with intention. Designed for everyday.
-          </p>
+        <div className="relative h-full flex flex-col items-start justify-end pb-8 sm:pb-12 px-6 sm:px-10 lg:px-16 text-left">
+          <HeroTypewriter />
           <Link
             href="/collections"
-            className="inline-flex items-center gap-2 h-13 px-10 bg-white text-black rounded-full text-sm font-medium hover:bg-neutral-100 transition-all active:scale-[0.98]"
+            className="hero-cta hero-rise inline-flex items-center gap-2 h-13 px-10 bg-white text-black rounded-full text-sm font-medium"
+            style={{ animationDelay: "2400ms" }}
           >
             Shop Collection
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="hero-cta-arrow h-4 w-4" />
           </Link>
         </div>
       </section>

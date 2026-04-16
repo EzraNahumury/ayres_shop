@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Manrope, Bricolage_Grotesque } from "next/font/google";
+import { Manrope, Bricolage_Grotesque, Barlow_Condensed, Space_Mono } from "next/font/google";
 import "./globals.css";
 import { ConfirmDialog } from "@/components/ui/confirm";
 import { Toaster } from "@/components/ui/toast";
@@ -16,6 +16,21 @@ const display = Bricolage_Grotesque({
   subsets: ["latin"],
   display: "swap",
   weight: ["300", "400", "500", "600", "700"],
+});
+
+const athletic = Barlow_Condensed({
+  variable: "--font-athletic",
+  subsets: ["latin"],
+  display: "swap",
+  weight: ["700", "800", "900"],
+  style: ["normal", "italic"],
+});
+
+const monoRetro = Space_Mono({
+  variable: "--font-mono-retro",
+  subsets: ["latin"],
+  display: "swap",
+  weight: ["400", "700"],
 });
 
 export const metadata: Metadata = {
@@ -35,7 +50,7 @@ export default function RootLayout({
   return (
     <html
       lang="id"
-      className={`${sans.variable} ${display.variable} h-full antialiased`}
+      className={`${sans.variable} ${display.variable} ${athletic.variable} ${monoRetro.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">
         {children}

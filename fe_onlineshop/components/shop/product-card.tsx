@@ -29,7 +29,7 @@ export function ProductCard({
   return (
     <Link href={`/products/${slug}`} className="group block">
       {/* Image */}
-      <div className="product-image-hover relative aspect-[3/4] rounded-xl bg-neutral-100 overflow-hidden mb-4">
+      <div className="product-image-hover relative aspect-square rounded-xl bg-neutral-100 overflow-hidden mb-4">
         <Image
           src={imageUrl}
           alt={name}
@@ -51,15 +51,15 @@ export function ProductCard({
 
       {/* Info */}
       <div className="space-y-1.5">
-        <h3 className="text-sm font-medium text-neutral-800 group-hover:text-black transition-colors line-clamp-2">
+        <h3 className="font-['Helvetica_Neue',Helvetica,Arial,sans-serif] font-bold text-base text-neutral-900 group-hover:text-black transition-colors line-clamp-2 leading-tight">
           {name}
         </h3>
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-black">
+          <span className="font-mono-retro text-sm text-neutral-700">
             {formatPrice(price)}
           </span>
           {hasDiscount && (
-            <span className="text-xs text-neutral-400 line-through">
+            <span className="font-mono-retro text-xs text-neutral-400 line-through">
               {formatPrice(originalPrice)}
             </span>
           )}

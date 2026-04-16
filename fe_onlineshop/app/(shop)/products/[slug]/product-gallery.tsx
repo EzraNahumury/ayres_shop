@@ -76,14 +76,14 @@ export function ProductGallery({
   const activeDisplayIdx = list.findIndex((i) => i.image_url === displayUrl);
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-neutral-100">
+    <div className="flex flex-col gap-3 w-full max-w-md mx-auto lg:max-w-lg">
+      <div className="relative aspect-square rounded-2xl overflow-hidden bg-neutral-100">
         <Image
           src={displayUrl}
           alt={active.alt_text || productName}
           fill
           priority
-          sizes="(max-width: 1024px) 100vw, 50vw"
+          sizes="(max-width: 768px) 100vw, 512px"
           className="object-cover"
         />
       </div>
