@@ -26,7 +26,6 @@ const footerLinks: {
   ],
   company: [
     { key: "footer.aboutUs", href: "/about" },
-    { key: "footer.careers", href: "/careers" },
     { key: "footer.privacy", href: "/privacy" },
     { key: "footer.terms", href: "/terms" },
   ],
@@ -91,16 +90,19 @@ export function Footer() {
             </div>
 
             <div className="flex items-center gap-2">
-              <SocialIcon href="#" label="Instagram">
+              <SocialIcon href="https://www.instagram.com/ayresapparel/?hl=en" label="Instagram">
                 <InstagramIcon />
               </SocialIcon>
-              <SocialIcon href="#" label="TikTok">
+              <SocialIcon href="https://www.tiktok.com/@ayres_apparel" label="TikTok">
                 <TiktokIcon />
               </SocialIcon>
-              <SocialIcon href="/" label="Website">
+              <SocialIcon href="https://ayreslab.id/" label="Website">
                 <Globe className="h-4 w-4" />
               </SocialIcon>
-              <SocialIcon href="#" label="Email">
+              <SocialIcon
+                href="https://mail.google.com/mail/?view=cm&fs=1&to=admin@ayresapparel.com"
+                label="Email"
+              >
                 <Mail className="h-4 w-4" />
               </SocialIcon>
             </div>
@@ -186,9 +188,13 @@ function SocialIcon({
   label: string;
   children: React.ReactNode;
 }) {
+  const isExternalWebLink = href.startsWith("http");
+
   return (
     <a
       href={href}
+      target={isExternalWebLink ? "_blank" : undefined}
+      rel={isExternalWebLink ? "noreferrer" : undefined}
       aria-label={label}
       className="group relative w-9 h-9 flex items-center justify-center rounded-full border border-white/10 bg-white/5 text-neutral-400 hover:text-black hover:bg-white hover:border-white transition-all duration-200 active:scale-95"
     >
