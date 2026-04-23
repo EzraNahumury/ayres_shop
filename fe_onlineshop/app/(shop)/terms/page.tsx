@@ -11,6 +11,7 @@ const sections = [
   { id: "modifikasi-layanan-harga", title: "Modifikasi Layanan dan Harga" },
   { id: "produk-layanan", title: "Produk atau Layanan" },
   { id: "akurasi-penagihan", title: "Akurasi Informasi Penagihan dan Akun" },
+  { id: "pengiriman-pengembalian", title: "Kebijakan Pengiriman & Pengembalian" },
   { id: "alat-opsional", title: "Alat Opsional" },
   { id: "tautan-ketiga", title: "Tautan Pihak Ketiga" },
   { id: "komentar-pengguna", title: "Komentar, Masukan & Submit Lainnya" },
@@ -191,6 +192,25 @@ const content: Record<string, React.ReactNode> = {
       </div>
       <p className="text-xs text-neutral-500 p-4 bg-amber-50 border border-amber-100 rounded-xl">
         Untuk detail lebih lanjut, silakan tinjau Kebijakan Pengembalian Dana kami.
+      </p>
+    </div>
+  ),
+  "pengiriman-pengembalian": (
+    <div className="space-y-4 text-neutral-600 leading-relaxed">
+      <div className="p-5 bg-blue-50 border border-blue-100 rounded-xl">
+        <h4 className="font-medium text-black mb-3">Pengiriman</h4>
+        <p className="text-sm">
+          Mohon tunggu 2–3 hari kerja untuk proses pemenuhan dan pengemasan pesanan Anda. Setelah itu, pesanan akan diserahkan kepada layanan pengiriman yang Anda pilih. Kami akan berusaha semaksimal mungkin agar paket Anda sampai secepat mungkin.
+        </p>
+      </div>
+      <div className="p-5 bg-neutral-50 border border-neutral-200 rounded-xl">
+        <h4 className="font-medium text-black mb-3">Kebijakan Pengembalian & Penukaran</h4>
+        <p className="text-sm">
+          Barang harus dalam kondisi asli, belum dipakai, dengan semua tag dan kemasan masih lengkap. Bukti pembelian wajib disertakan untuk setiap pengembalian atau penukaran.
+        </p>
+      </div>
+      <p className="text-sm text-neutral-500 italic">
+        Terima kasih atas pengertian dan dukungan Anda.
       </p>
     </div>
   ),
